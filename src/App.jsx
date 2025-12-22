@@ -1,20 +1,16 @@
 import { useState } from 'react'
-import Sidebar from './components/Sidebar'
-import Header from './components/Header'
-import DashboardView from './views/DashboardView'
-import FleetView from './views/FleetView'
-import FinancesView from './views/FinancesView'
-import AIAuditView from './views/AIAuditView'
-import PricingView from './views/PricingView'
-import TransactionModal from './components/TransactionModal'
+import MobileHeader from './components/MobileHeader'
+import BottomNav from './components/BottomNav'
+import DesktopSidebar from './components/DesktopSidebar'
+import RegistrarView from './views/RegistrarView'
+import MovimientosView from './views/MovimientosView'
 import Toast from './components/Toast'
+import { initialTransactions } from './data/mockData'
 
 function App() {
-    const [activeView, setActiveView] = useState('dashboard')
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [activeView, setActiveView] = useState('registrar')
+    const [transactions, setTransactions] = useState(initialTransactions)
     const [toast, setToast] = useState(null)
-    const [transactions, setTransactions] = useState([])
-    const [demoMode, setDemoMode] = useState('pro') // 'basic', 'standard', 'pro'
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type })
@@ -23,52 +19,40 @@ function App() {
 
     const handleAddTransaction = (transaction) => {
         setTransactions([transaction, ...transactions])
-        setIsModalOpen(false)
-        showToast('Movimiento registrado correctamente', 'success')
-    }
-
-    const renderView = () => {
-        const viewProps = { transactions, onAddTransaction: () => setIsModalOpen(true), demoMode }
-
-        switch (activeView) {
-            case 'dashboard':
-                return <DashboardView {...viewProps} />
-            case 'fleet':
-                return <FleetView demoMode={demoMode} />
-            case 'finances':
-                return <FinancesView transactions={transactions} demoMode={demoMode} />
-            case 'ai-audit':
-                return <AIAuditView />
-            case 'pricing':
-                return <PricingView />
-            default:
-                return <DashboardView {...viewProps} />
-        }
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50">
-            <Sidebar activeView={activeView} setActiveView={setActiveView} />
+        <div className="min-h-screen bg-slate-50">
+            {/* Mobile Header - visible on all screens */}
+            <MobileHeader />
 
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Header
-                    onNewMovement={() => setIsModalOpen(true)}
-                    demoMode={demoMode}
-                    setDemoMode={setDemoMode}
-                />
+            {/* Desktop Sidebar - hidden on mobile */}
+            <DesktopSidebar
+                activeView={activeView}
+                setActiveView={setActiveView}
+            />
 
-                <main className="flex-1 overflow-y-auto scrollbar-thin p-6">
-                    {renderView()}
-                </main>
-            </div>
+            {/* Main Content */}
+            <main className="md:ml-64 p-4 pb-20 md:pb-4">
+                {activeView === 'registrar' && (
+                    <RegistrarView
+                        onAddTransaction={handleAddTransaction}
+                        showToast={showToast}
+                    />
+                )}
 
-            {isModalOpen && (
-                <TransactionModal
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={handleAddTransaction}
-                />
-            )}
+                {activeView === 'movimientos' && (
+                    <MovimientosView transactions={transactions} />
+                )}
+            </main>
 
+            {/* Mobile Bottom Navigation - hidden on desktop */}
+            <BottomNav
+                activeView={activeView}
+                setActiveView={setActiveView}
+            />
+
+            {/* Toast Notifications */}
             {toast && <Toast message={toast.message} type={toast.type} />}
         </div>
     )

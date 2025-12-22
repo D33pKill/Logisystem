@@ -1,265 +1,205 @@
-# 🚚 LogiSystem Enterprise - Sistema de Gestión Logística
+# 🚚 LogiSystem - Gestión Logística Mobile-First
 
-> Demo de ventas profesional desarrollado con React + Vite + Tailwind CSS
+> Aplicación web responsive para gestión de movimientos logísticos en terreno
 
 [![React](https://img.shields.io/badge/React-18.2.0-61dafb?logo=react)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.0.8-646cff?logo=vite)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.0-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Una aplicación de demostración para venta de software de gestión logística con 3 experiencias visuales diferenciadas por plan.**
+**Aplicación diseñada específicamente para uso en terreno desde dispositivos móviles, con interfaz táctil optimizada.**
 
 ---
 
-## 🎯 Propósito
+## 🎯 Diseño Mobile-First
 
-Esta aplicación es un **demo de ventas de alto impacto** diseñado para mostrar las capacidades de un sistema de gestión logística. Incluye tres modos demo que permiten contrastar visualmente los diferentes planes de licencia:
+Esta aplicación está diseñada **priorizando el uso móvil** para conductores y personal en terreno:
 
-- **📄 Modo Básico**: Interfaz simple estilo Excel sin animaciones
-- **⚡ Modo Estándar**: Diseño profesional con funcionalidades core
-- **✨ Modo PRO IA**: Experiencia premium completa con IA y exportaciones
+- 📱 **Optimizada para móviles**: Interfaz táctil con botones grandes (mín. 44px)
+- 💻 **Responsive Desktop**: Se adapta automáticamente a pantallas grandes
+- 🎨 **Bottom Navigation**: Navegación inferior estilo app nativa en móvil
+- 📊 **Vistas Adaptativas**: Cards en móvil, tablas en desktop
 
 ## ✨ Características Principales
 
-### Vistas Implementadas
+### 📝 Registrar Movimientos
 
-1. **📊 Dashboard Gerencial**
-   - KPIs con conteo animado (Facturación, Gastos, Utilidad Neta, Estado de Flota)
-   - Gráfico de flujo financiero con Recharts
-   - Top 3 camiones rentables
-   - Tabla de transacciones recientes
+**Formulario Inteligente** con campos condicionales:
 
-2. **🚛 Gestión de Flota**
-   - Visualización de estado de vehículos (En Ruta, En Espera, Taller)
-   - Cards individuales con información del conductor y ruta
-   - Indicadores de rentabilidad por unidad
+- **Toggle Ingreso/Gasto**: Botones grandes diferenciados por color
+- **Si es INGRESO**:
+  - Campos: Fecha, Camión, Monto, Descripción
+  - ✅ Switch "¿Hubo Reclamo/Merma?"
+  - Si activado → inputs para folio y detalle + botón adjuntar foto
 
-3. **💰 Centro Financiero**
-   - Resumen Debe/Haber
-   - Libro Mayor completo con saldo corriente
-   - **Exportación a Excel** (exclusivo PRO)
-   - **Generación de PDF** (exclusivo PRO)
+- **Si es GASTO**:
+  - Categorías: Combustible, Peajes, Sueldo, Mantención, Multas, Indemnizaciones, Otros
+  - Si es Combustible → campos extra: Litros y Kilometraje
+  - Botón adjuntar foto de boleta/vale
 
-4. **🤖 IA Auditoría** *(Exclusivo Plan PRO)*
-   - OCR simulado de facturas
-   - Extracción automática de datos (Fecha, Monto, RUT, Categoría)
-   - Validación contra SII
-   - Sugerencia de cuenta contable
-   - Confianza de IA al 98%
+### 📊 Ver Movimientos
 
-5. **💎 Planes y Precios**
-   - 3 niveles: Start-Up, Pyme Pro, Enterprise AI
-   - Comparación visual de características
-   - Precios en CLP
+**Vista Adaptativa** según dispositivo:
 
-### Funcionalidades Interactivas
+**Móvil (< 768px)**:
+- Cards verticales con información resumida
+- Monto destacado
+- Badge de alerta si tiene reclamo
+- Touch-friendly
 
-- ✅ **Modal de Nuevo Movimiento**: Agrega transacciones con actualización en tiempo real
-- ✅ **Toast Notifications**: Feedback visual inmediato
-- ✅ **Selector de Modo Demo**: Cambia entre los 3 planes en el header
-- ✅ **Exportaciones Funcionales**: Excel (CSV) y PDF con datos reales
-- ✅ **Animaciones Fluidas**: Framer Motion para efectos profesionales
-- ✅ **Datos Chilenos**: Empresas reales (Copec, Falabella, Sodimac), rutas, patentes
+**Desktop (≥ 768px)**:
+- Tabla detallada con todas las columnas
+- Filas con fondo rojo si hay reclamo
+- Más información visible
+
+**Funcionalidades**:
+- 🔍 Búsqueda por folio, descripción o patente
+- 📈 Resumen financiero (Ingresos - Gastos = Saldo)
+- 📥 Exportación a Excel (CSV)
 
 ## 🚀 Instalación y Uso
 
-### Requisitos Previos
-
-- Node.js 16+ 
-- npm o yarn
-
-### Instalación
-
 ```bash
-# Clonar el repositorio
+# Clonar repositorio
 git clone https://github.com/D33pKill/Logisystem.git
 cd Logisystem
 
 # Instalar dependencias
 npm install
 
-# Ejecutar servidor de desarrollo
+# Ejecutar en desarrollo
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:3000`
+La aplicación estará en `http://localhost:3000`
 
-### Scripts Disponibles
+## 📱 Navegación
 
-```bash
-npm run dev      # Servidor de desarrollo
-npm run build    # Build de producción
-npm run preview  # Preview del build
-```
+### Mobile
 
-## 🎨 Stack Tecnológico
+Bottom Navigation fija con 2 pestañas:
+- **📝 Registrar**: Formulario de nuevo movimiento
+- **📋 Movimientos**: Historial y búsqueda
 
-| Tecnología | Versión | Propósito |
-|------------|---------|-----------|
-| React | 18.2.0 | Framework UI |
-| Vite | 5.0.8 | Build tool ultra-rápido |
-| Tailwind CSS | 3.4.0 | Estilos utility-first |
-| Framer Motion | 10.16.16 | Animaciones fluidas |
-| Recharts | 2.10.3 | Gráficos interactivos |
-| Lucide React | 0.294.0 | Iconografía moderna |
+### Desktop
+
+Sidebar lateral izquierda con las mismas opciones.
 
 ## 📂 Estructura del Proyecto
 
 ```
-transporte2/
-├── src/
-│   ├── components/          # Componentes reutilizables
-│   │   ├── Header.jsx       # Cabecera con selector de modo
-│   │   ├── KPICard.jsx      # Tarjetas KPI animadas
-│   │   ├── Sidebar.jsx      # Navegación lateral
-│   │   ├── Toast.jsx        # Notificaciones
-│   │   └── TransactionModal.jsx  # Modal de transacciones
-│   │
-│   ├── views/              # Vistas principales
-│   │   ├── DashboardView.jsx     # Dashboard con KPIs
-│   │   ├── FleetView.jsx         # Gestión de flota
-│   │   ├── FinancesView.jsx      # Centro financiero
-│   │   ├── AIAuditView.jsx       # IA de auditoría
-│   │   └── PricingView.jsx       # Planes y precios
-│   │
-│   ├── data/
-│   │   └── mockData.js      # Datos de demostración
-│   │
-│   ├── hooks/
-│   │   └── useCountUp.js    # Hook para conteo animado
-│   │
-│   ├── utils/
-│   │   └── helpers.js       # Funciones auxiliares + exportaciones
-│   │
-│   ├── App.jsx              # Componente principal
-│   ├── main.jsx             # Punto de entrada
-│   └── index.css            # Estilos globales
+src/
+├── components/
+│   ├── BottomNav.jsx           # Navegación inferior móvil
+│   ├── MobileHeader.jsx         # Cabecera simple
+│   ├── DesktopSidebar.jsx       # Sidebar para desktop
+│   ├── Toast.jsx                # Notificaciones
+│   └── KPICard.jsx              # (Reutilizable)
 │
-├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-└── postcss.config.js
+├── views/
+│   ├── RegistrarView.jsx        # Formulario inteligente
+│   └── MovimientosView.jsx      # Historial adaptativo
+│
+├── data/
+│   └── mockData.js              # Datos de ejemplo
+│
+├── hooks/
+│   └── useCountUp.js            # Hook de animación
+│
+├── utils/
+│   └── helpers.js               # Funciones auxiliares
+│
+├── App.jsx                      # Componente principal
+├── main.jsx                     # Punto de entrada
+└── index.css                    # Estilos globales
 ```
 
-## 🎯 Guía de Uso para Demos de Venta
+## 🎨 Stack Tecnológico
 
-### Estrategia de Presentación
+| Tecnología | Uso |
+|------------|-----|
+| React 18 | Framework UI |
+| Vite 5 | Build tool ultra-rápido |
+| Tailwind CSS | Estilos utility-first |
+| Framer Motion | Animaciones suaves |
+| Lucide React | Iconografía moderna |
 
-1. **Inicio - Modo Básico** (30 seg)
-   > "Así trabajan hoy sin nuestro sistema..."
-   - Muestra la interfaz aburrida tipo Excel
-   - Destaca la falta de visualización
+## 💡 Características de Diseño
 
-2. **Transición - Modo Estándar** (45 seg)
-   > "Con el plan estándar obtienen esto..."
-   - Dashboard profesional
-   - Gráficos funcionales
-   - Navegación fluida
+### Touch-Friendly
 
-3. **Cierre - Modo PRO IA** (2 min)
-   > "Pero con PRO IA tienen magia total..."
-   - Demostrar exportación a Excel/PDF
-   - Simular procesamiento de factura con IA
-   - Mostrar resultados con 98% confianza
-   - Destacar ahorro de 42 horas/mes
+- ✅ Todos los botones ≥ 44px de altura
+- ✅ Inputs grandes (h-12 mínimo)
+- ✅ Espaciado generoso (padding 4-6)
+- ✅ Texto legible (≥ 16px base)
 
-### Puntos de Venta Clave
+### Responsive Breakpoints
 
-- **ROI Comprobado**: 42 horas/mes ahorradas vs entrada manual
-- **Precisión IA**: 99% validado por usuarios reales
-- **Integración SII**: Validación automática de facturas
-- **Datos Locales**: Diseñado específicamente para empresas chilenas
+```css
+mobile:  < 768px   (sm/default)
+desktop: ≥ 768px   (md)
+```
 
-## 🔐 Contexto Empresarial Chileno
+### Colores
 
-El sistema utiliza datos reales del mercado chileno:
+- **Primario**: Blue-600 (Acciones)
+- **Éxito**: Emerald-600 (Ingresos)
+- **Peligro**: Red-600 (Gastos/Reclamos)
+- **Neutro**: Slate-900/600 (Textos)
 
-- **Empresas**: Copec, Falabella, Sodimac, Ruta del Maipo
+## 📊 Datos de Ejemplo
+
+La aplicación incluye 10 transacciones de ejemplo con:
+
+- ✅ Ingreso con reclamo (Falabella - Caja mojada)
+- ✅ Multa TAG de alto monto
+- ✅ Combustible con litros y kilometraje
+- ✅ Varios otros casos realistas
+
+## 🔐 Contexto Chileno
+
+- **Empresas**: Falabella, Sodimac, Copec, Walmart
 - **Rutas**: Santiago-Concepción, Valparaíso-La Serena
 - **Camiones**: Volvo FH, Scania R500, Mercedes Actros
-- **Monedas**: Pesos Chilenos (CLP) con formato local
+- **Moneda**: Pesos Chilenos (CLP)
 
-## 🎨 Personalización
+## 📱 Testing Móvil
 
-### Cambiar Colores del Tema
+Para probar en dispositivo real:
 
-Edita `tailwind.config.js`:
+```bash
+# Obtener IP local
+ipconfig  # Windows
+ifconfig  # macOS/Linux
 
-```javascript
-theme: {
-  extend: {
-    colors: {
-      primary: '#2563eb',  // Azul principal
-      secondary: '#10b981', // Verde secundario
-    }
-  }
-}
+# Acceder desde móvil
+http://TU_IP_LOCAL:3000
 ```
 
-### Modificar Datos de Demo
-
-Edita `src/data/mockData.js` para personalizar:
-- Transacciones
-- Información de camiones
-- Datos financieros mensuales
-- Planes de precios
-
-## 📊 Funcionalidades de Exportación
-
-### Excel (CSV)
-
-```javascript
-import { exportToExcel } from './utils/helpers'
-
-exportToExcel(data, 'nombre_archivo')
-```
-
-### PDF (Print-based)
-
-```javascript
-import { exportToPDF, generateFinancialReport } from './utils/helpers'
-
-const content = generateFinancialReport(totals, transactions)
-exportToPDF(content, 'reporte_financiero')
-```
+Ejemplo: `http://192.168.1.100:3000`
 
 ## 🤝 Contribución
 
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+Pull requests son bienvenidos. Para cambios mayores, abre un issue primero.
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más información.
+MIT © 2024 LogiSystem
 
 ## 👤 Autor
 
 **Tomás**
-
 - GitHub: [@D33pKill](https://github.com/D33pKill)
-
-## 🙏 Agradecimientos
-
-- Diseño inspirado en las mejores prácticas de SaaS moderno
-- Datos de ejemplo basados en empresas reales chilenas
-- Comunidad de React y Tailwind CSS
 
 ---
 
-**⭐ Si este proyecto te fue útil, considera darle una estrella en GitHub!**
+**⭐ Si este proyecto te fue útil, considera darle una estrella!**
 
 ## 📧 Contacto
 
-Para consultas sobre implementación o licenciamiento:
-- Email: ventas@logisystem.cl
+Para consultas o soporte:
+- Email: contacto@logisystem.cl
 - Teléfono: +56 9 1234 5678
 
 ---
 
-*Desarrollado con ❤️ para demostrar el poder de React + Vite + Tailwind CSS*
+*Desarrollado con ❤️ para conductores en terreno*
