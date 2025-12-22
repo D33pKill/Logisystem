@@ -1,8 +1,10 @@
-import { Home, Plus, List, Truck } from 'lucide-react'
+import { Home, Plus, Users, List, Truck } from 'lucide-react'
 
 export default function DesktopSidebar({ activeView, setActiveView }) {
     const navItems = [
+        { id: 'inicio', label: 'Inicio', icon: Home },
         { id: 'registrar', label: 'Registrar Movimiento', icon: Plus },
+        { id: 'personal', label: 'Personal', icon: Users },
         { id: 'movimientos', label: 'Ver Movimientos', icon: List },
         { id: 'camiones', label: 'Gestión de Camiones', icon: Truck }
     ]

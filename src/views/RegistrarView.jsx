@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus, Map, AlertTriangle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus, Map, AlertTriangle, User, Calendar, FileText, Upload } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 
 export default function RegistrarView({ onAddTransaction, showToast, trucks, customTags = [], onAddCustomTag }) {
+    const { employees, addTransaction } = useApp()
     const [transactionType, setTransactionType] = useState('income')
     const [hasComplaint, setHasComplaint] = useState(false)
     const [selectedTags, setSelectedTags] = useState([])
@@ -22,10 +24,15 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
         description: '',
         category: 'Combustible', // Expense only
         liters: '', // Expense only
-        mileage: '' // Expense only
+        mileage: '', // Expense only
+        selectedEmployee: '', // Para Sueldo/Anticipo
+        mesPago: '', // Para Sueldo/Anticipo
+        liquidacionFile: null // Para Sueldo/Anticipo
     })
 
-    const categories = ['Combustible', 'Peajes', 'Sueldo Conductor', 'Mantención', 'Multas', 'Indemnizaciones', 'Otros']
+    const categories = ['Combustible', 'Peajes', 'Sueldo', 'Anticipo', 'Mantención', 'Multas', 'Indemnizaciones', 'Otros']
+    
+    const isSueldoOrAnticipo = formData.category === 'Sueldo' || formData.category === 'Anticipo'
     const predefinedTags = ['Carga Nocturna', 'Rural', 'Urbano', 'Cyber', 'IKEA', 'Segunda Vuelta PM', 'Retiros AM', 'Flete']
     const allTags = [...predefinedTags, ...customTags]
 
@@ -149,10 +156,23 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                     mileage: parseFloat(formData.mileage) || 0
                 }
             }),
+            ...(transactionType === 'expense' && isSueldoOrAnticipo && {
+                employeeDetails: {
+                    employeeId: formData.selectedEmployee,
+                    employeeName: employees.find(e => e.id.toString() === formData.selectedEmployee)?.nombre || '',
+                    mesPago: formData.mesPago,
+                    liquidacionUrl: formData.liquidacionFile ? URL.createObjectURL(formData.liquidacionFile) : null
+                }
+            }),
             category: transactionType === 'expense' ? formData.category : null
         }
 
-        onAddTransaction(transaction)
+        // Usar addTransaction del contexto si está disponible, sino usar el prop
+        if (addTransaction) {
+            addTransaction(transaction)
+        } else {
+            onAddTransaction(transaction)
+        }
         showToast(`${transactionType === 'income' ? 'Ingreso' : 'Gasto'} registrado correctamente`, 'success')
 
         setFormData({
@@ -161,7 +181,10 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
             description: '',
             routeId: '',
             liters: '',
-            mileage: ''
+            mileage: '',
+            selectedEmployee: '',
+            mesPago: '',
+            liquidacionFile: null
         })
         setHasComplaint(false)
         setSelectedTags([])
@@ -355,32 +378,123 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                         </div>
                         <div>
                             <label className={labelClass}>Categoría</label>
-                            <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className={inputClass} required>
+                            <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value, selectedEmployee: '', mesPago: '', liquidacionFile: null })} className={inputClass} required>
                                 {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                         </div>
 
-                        {formData.category === 'Combustible' && (
-                            <div className="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        {/* Lógica Reactiva: Si es Sueldo o Anticipo */}
+                        {isSueldoOrAnticipo ? (
+                            <AnimatePresence>
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="space-y-4 bg-blue-50 p-5 rounded-xl border border-blue-200"
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <User className="w-5 h-5 text-blue-600" />
+                                        <h4 className="font-bold text-blue-900">Datos del Trabajador</h4>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>Seleccionar Trabajador <span className="text-red-500">*</span></label>
+                                        <select
+                                            value={formData.selectedEmployee}
+                                            onChange={(e) => setFormData({ ...formData, selectedEmployee: e.target.value })}
+                                            className={inputClass}
+                                            required
+                                        >
+                                            <option value="">-- Seleccione un trabajador --</option>
+                                            {employees.map(emp => (
+                                                <option key={emp.id} value={emp.id}>
+                                                    {emp.nombre} - {emp.cargo}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>Mes de Pago <span className="text-red-500">*</span></label>
+                                        <div className="relative">
+                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                                            <input
+                                                type="month"
+                                                value={formData.mesPago}
+                                                onChange={(e) => setFormData({ ...formData, mesPago: e.target.value })}
+                                                className={`${inputClass} pl-10`}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>Adjuntar Liquidación</label>
+                                        {formData.liquidacionFile ? (
+                                            <div className="relative p-4 bg-white border-2 border-blue-300 rounded-xl mt-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <FileText className="w-5 h-5 text-blue-600" />
+                                                        <span className="text-sm font-bold text-blue-900">
+                                                            {formData.liquidacionFile.name}
+                                                        </span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, liquidacionFile: null })}
+                                                        className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <label className="block p-4 border-2 border-dashed border-blue-300 rounded-xl cursor-pointer hover:bg-white hover:border-blue-400 transition-all text-center mt-2 bg-white">
+                                                <Upload className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+                                                <span className="text-sm font-bold text-blue-700">
+                                                    Subir Liquidación (PDF o Foto)
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,image/*"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0]
+                                                        if (file) {
+                                                            setFormData({ ...formData, liquidacionFile: file })
+                                                        }
+                                                    }}
+                                                    className="hidden"
+                                                />
+                                            </label>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
+                        ) : (
+                            <>
+                                {formData.category === 'Combustible' && (
+                                    <div className="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                        <div>
+                                            <label className="text-xs font-bold text-blue-800">Litros</label>
+                                            <input type="number" step="0.1" value={formData.liters} onChange={(e) => setFormData({ ...formData, liters: e.target.value })} className="w-full h-10 px-2 rounded border border-blue-200 bg-white" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-blue-800">KM</label>
+                                            <input type="number" value={formData.mileage} onChange={(e) => setFormData({ ...formData, mileage: e.target.value })} className="w-full h-10 px-2 rounded border border-blue-200 bg-white" />
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div>
-                                    <label className="text-xs font-bold text-blue-800">Litros</label>
-                                    <input type="number" step="0.1" value={formData.liters} onChange={(e) => setFormData({ ...formData, liters: e.target.value })} className="w-full h-10 px-2 rounded border border-blue-200 bg-white" />
+                                    <label className={labelClass}>Boleta / Comprobante</label>
+                                    {renderPhotoGrid(expensePhotos, 'expense', 4)}
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-blue-800">KM</label>
-                                    <input type="number" value={formData.mileage} onChange={(e) => setFormData({ ...formData, mileage: e.target.value })} className="w-full h-10 px-2 rounded border border-blue-200 bg-white" />
-                                </div>
-                            </div>
+                            </>
                         )}
 
                         <div>
                             <label className={labelClass}>Monto</label>
                             <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className={inputClass} placeholder="$0" required />
-                        </div>
-
-                        <div>
-                            <label className={labelClass}>Boleta / Comprobante</label>
-                            {renderPhotoGrid(expensePhotos, 'expense', 4)}
                         </div>
 
                         <div>

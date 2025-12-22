@@ -1,16 +1,19 @@
 import { useState } from 'react'
+import { AppProvider, useApp } from './context/AppContext'
 import MobileHeader from './components/MobileHeader'
 import BottomNav from './components/BottomNav'
 import DesktopSidebar from './components/DesktopSidebar'
+import InicioView from './views/InicioView'
 import RegistrarView from './views/RegistrarView'
+import PersonalView from './views/PersonalView'
 import MovimientosView from './views/MovimientosView'
 import CamionesView from './views/CamionesView'
 import Toast from './components/Toast'
-import { initialTransactions, trucks as initialTrucks } from './data/mockData'
+import { trucks as initialTrucks } from './data/mockData'
 
-function App() {
-    const [activeView, setActiveView] = useState('registrar')
-    const [transactions, setTransactions] = useState(initialTransactions)
+function AppContent() {
+    const { transactions } = useApp()
+    const [activeView, setActiveView] = useState('inicio')
     const [trucks, setTrucks] = useState(initialTrucks)
     const [customTags, setCustomTags] = useState([])
     const [toast, setToast] = useState(null)
@@ -20,9 +23,6 @@ function App() {
         setTimeout(() => setToast(null), 3000)
     }
 
-    const handleAddTransaction = (transaction) => {
-        setTransactions([transaction, ...transactions])
-    }
 
     const handleAddTruck = (truck) => {
         setTrucks([...trucks, truck])
@@ -51,9 +51,12 @@ function App() {
 
             {/* Main Content */}
             <main className="md:ml-64 p-4 pb-20 md:pb-4">
+                {activeView === 'inicio' && (
+                    <InicioView />
+                )}
+
                 {activeView === 'registrar' && (
                     <RegistrarView
-                        onAddTransaction={handleAddTransaction}
                         showToast={showToast}
                         trucks={trucks}
                         customTags={customTags}
@@ -61,9 +64,14 @@ function App() {
                     />
                 )}
 
+                {activeView === 'personal' && (
+                    <PersonalView
+                        showToast={showToast}
+                    />
+                )}
+
                 {activeView === 'movimientos' && (
                     <MovimientosView
-                        transactions={transactions}
                         showToast={showToast}
                     />
                 )}
@@ -86,6 +94,14 @@ function App() {
             {/* Toast Notifications */}
             {toast && <Toast message={toast.message} type={toast.type} />}
         </div>
+    )
+}
+
+function App() {
+    return (
+        <AppProvider>
+            <AppContent />
+        </AppProvider>
     )
 }
 

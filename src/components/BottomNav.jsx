@@ -1,8 +1,15 @@
-import { Truck, Plus, List } from 'lucide-react'
+import { Home, Plus, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function BottomNav({ activeView, setActiveView }) {
     const navItems = [
+        {
+            id: 'inicio',
+            label: 'Inicio',
+            icon: Home,
+            color: 'text-blue-600',
+            activeBg: 'bg-blue-50'
+        },
         {
             id: 'registrar',
             label: 'Registrar',
@@ -11,18 +18,11 @@ export default function BottomNav({ activeView, setActiveView }) {
             activeBg: 'bg-blue-50'
         },
         {
-            id: 'movimientos',
-            label: 'Movimientos',
-            icon: List,
-            color: 'text-slate-600',
-            activeBg: 'bg-slate-50'
-        },
-        {
-            id: 'camiones',
-            label: 'Camiones',
-            icon: Truck,
-            color: 'text-orange-600',
-            activeBg: 'bg-orange-50'
+            id: 'personal',
+            label: 'Personal',
+            icon: Users,
+            color: 'text-blue-600',
+            activeBg: 'bg-blue-50'
         }
     ]
 

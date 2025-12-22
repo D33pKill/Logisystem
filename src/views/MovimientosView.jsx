@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, FileSpreadsheet, TrendingUp, TrendingDown, Calendar, Truck, AlertTriangle } from 'lucide-react'
 import MovementDetailModal from '../components/MovementDetailModal'
 import { formatCurrency, exportToExcel } from '../utils/helpers'
+import { useApp } from '../context/AppContext'
 
-export default function MovimientosView({ transactions, showToast }) {
+export default function MovimientosView({ showToast }) {
+    const { transactions } = useApp()
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedMovement, setSelectedMovement] = useState(null)
 
