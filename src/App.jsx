@@ -12,6 +12,7 @@ function App() {
     const [activeView, setActiveView] = useState('registrar')
     const [transactions, setTransactions] = useState(initialTransactions)
     const [trucks, setTrucks] = useState(initialTrucks)
+    const [customTags, setCustomTags] = useState([])
     const [toast, setToast] = useState(null)
 
     const showToast = (message, type = 'success') => {
@@ -33,6 +34,10 @@ function App() {
         showToast('Camión eliminado', 'success')
     }
 
+    const handleAddCustomTag = (tag) => {
+        setCustomTags([...customTags, tag])
+    }
+
     return (
         <div className="min-h-screen bg-slate-50">
             {/* Mobile Header - visible on all screens */}
@@ -51,11 +56,16 @@ function App() {
                         onAddTransaction={handleAddTransaction}
                         showToast={showToast}
                         trucks={trucks}
+                        customTags={customTags}
+                        onAddCustomTag={handleAddCustomTag}
                     />
                 )}
 
                 {activeView === 'movimientos' && (
-                    <MovimientosView transactions={transactions} />
+                    <MovimientosView
+                        transactions={transactions}
+                        showToast={showToast}
+                    />
                 )}
 
                 {activeView === 'camiones' && (

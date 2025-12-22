@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
 import { Search, FileSpreadsheet, TrendingUp, TrendingDown, AlertTriangle, Calendar, Truck } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency, exportToExcel } from '../utils/helpers'
+import MovementDetailModal from '../components/MovementDetailModal'
 
 export default function MovimientosView({ transactions }) {
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedMovement, setSelectedMovement] = useState(null)
 
     // Filtrar transacciones
     const filteredTransactions = useMemo(() => {
@@ -14,7 +16,8 @@ export default function MovimientosView({ transactions }) {
         return transactions.filter(t =>
             t.description.toLowerCase().includes(query) ||
             t.truck.toLowerCase().includes(query) ||
-            (t.complaintDetails?.folio || '').toLowerCase().includes(query)
+            (t.complaintDetails?.folio || '').toLowerCase().includes(query) ||
+            (t.tags || '').toLowerCase().includes(query)
         )
     }, [transactions, searchQuery])
 
@@ -32,6 +35,7 @@ export default function MovimientosView({ transactions }) {
             Descripción: t.description,
             Camión: t.truck,
             Categoría: t.category || '-',
+            Etiquetas: t.tags || '-',
             Monto: t.amount,
             Reclamo: t.hasComplaint ? 'SÍ' : 'NO',
             Folio: t.complaintDetails?.folio || '-'
@@ -51,7 +55,7 @@ export default function MovimientosView({ transactions }) {
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Buscar por folio, descripción o patente..."
+                        placeholder="Buscar por folio, descripción, patente o etiqueta..."
                         className="w-full h-12 pl-11 pr-4 border border-slate-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
@@ -101,7 +105,8 @@ export default function MovimientosView({ transactions }) {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className={`bg-white rounded-lg p-4 shadow-sm ${transaction.hasComplaint ? 'border-2 border-red-400' : 'border border-slate-200'
+                                onClick={() => setSelectedMovement(transaction)}
+                                className={`bg-white rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${transaction.hasComplaint ? 'border-2 border-red-400' : 'border border-slate-200'
                                     }`}
                             >
                                 {/* Header */}
@@ -152,25 +157,6 @@ export default function MovimientosView({ transactions }) {
                                         </span>
                                     )}
                                 </div>
-
-                                {/* Complaint Detail */}
-                                {transaction.hasComplaint && transaction.complaintDetails.description && (
-                                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
-                                        {transaction.complaintDetails.description}
-                                    </div>
-                                )}
-
-                                {/* Fuel Details */}
-                                {transaction.fuelDetails && (
-                                    <div className="mt-2 flex gap-3 text-xs text-slate-600">
-                                        {transaction.fuelDetails.liters > 0 && (
-                                            <span>🛢️ {transaction.fuelDetails.liters} L</span>
-                                        )}
-                                        {transaction.fuelDetails.mileage > 0 && (
-                                            <span>🚗 {transaction.fuelDetails.mileage} km</span>
-                                        )}
-                                    </div>
-                                )}
                             </motion.div>
                         ))
                     )}
@@ -201,7 +187,8 @@ export default function MovimientosView({ transactions }) {
                                 filteredTransactions.map((transaction) => (
                                     <tr
                                         key={transaction.id}
-                                        className={`hover:bg-slate-50 transition-colors ${transaction.hasComplaint ? 'bg-red-50' : ''
+                                        onClick={() => setSelectedMovement(transaction)}
+                                        className={`hover:bg-slate-50 transition-colors cursor-pointer ${transaction.hasComplaint ? 'bg-red-50' : ''
                                             }`}
                                     >
                                         <td className="px-6 py-4 text-sm text-slate-600">{transaction.date}</td>
@@ -254,6 +241,16 @@ export default function MovimientosView({ transactions }) {
                     </table>
                 </div>
             </div>
+
+            {/* Movement Detail Modal */}
+            <AnimatePresence>
+                {selectedMovement && (
+                    <MovementDetailModal
+                        movement={selectedMovement}
+                        onClose={() => setSelectedMovement(null)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     )
 }

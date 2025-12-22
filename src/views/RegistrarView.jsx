@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus } from 'lucide-react'
 
-export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
+export default function RegistrarView({ onAddTransaction, showToast, trucks, customTags = [], onAddCustomTag }) {
     const [transactionType, setTransactionType] = useState('income')
     const [hasComplaint, setHasComplaint] = useState(false)
     const [selectedTags, setSelectedTags] = useState([])
     const [photos, setPhotos] = useState([])
+    const [newTagInput, setNewTagInput] = useState('')
+    const [showTagInput, setShowTagInput] = useState(false)
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
         truck: trucks[0]?.plate || '',
@@ -29,8 +31,8 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
         'Otros'
     ]
 
-    // Etiquetas exactas del cliente (hardcoded para Excel filtering)
-    const businessTags = [
+    // Etiquetas predefinidas del cliente
+    const predefinedTags = [
         'Carga Nocturna',
         'Rural',
         'Urbano',
@@ -40,6 +42,28 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
         'Retiros AM',
         'Flete'
     ]
+
+    // Combinar etiquetas predefinidas con personalizadas
+    const allTags = [...predefinedTags, ...customTags]
+
+    const handleAddCustomTag = () => {
+        const trimmedTag = newTagInput.trim()
+
+        if (!trimmedTag) {
+            showToast('Ingresa un nombre para la etiqueta', 'error')
+            return
+        }
+
+        if (allTags.includes(trimmedTag)) {
+            showToast('Esta etiqueta ya existe', 'error')
+            return
+        }
+
+        onAddCustomTag(trimmedTag)
+        setNewTagInput('')
+        setShowTagInput(false)
+        showToast(`Etiqueta "${trimmedTag}" creada`, 'success')
+    }
 
     const toggleTag = (tag) => {
         if (selectedTags.includes(tag)) {
@@ -82,6 +106,7 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
 
         // Convertir tags a string separado por comas para Excel
         const tagsString = selectedTags.join(', ')
+        const photoUrls = photos.filter(Boolean).map(p => p.url)
 
         const transaction = {
             id: Date.now(),
@@ -91,7 +116,7 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
             amount: parseFloat(formData.amount),
             description: formData.description || (transactionType === 'income' ? 'Flete' : formData.category),
             tags: tagsString, // Para exportar a Excel filtrable
-            photos: photos.filter(Boolean).length,
+            photos: photoUrls, // Guardar URLs de fotos
             ...(transactionType === 'income' && hasComplaint && {
                 hasComplaint: true,
                 complaintDetails: {
@@ -123,10 +148,6 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
         })
         setHasComplaint(false)
         setSelectedTags([])
-        // Cleanup photo URLs
-        photos.forEach(photo => {
-            if (photo) URL.revokeObjectURL(photo.url)
-        })
         setPhotos([])
     }
 
@@ -278,12 +299,13 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
                     />
                 </div>
 
-                {/* Etiquetas de Clasificación (Multi-Select Chips) */}
+                {/* Etiquetas de Clasificación con opción de crear nuevas */}
                 <div>
                     <label className={labelClass}>Etiquetas de Clasificación</label>
                     <div className="flex flex-wrap gap-2">
-                        {businessTags.map(tag => {
+                        {allTags.map(tag => {
                             const isSelected = selectedTags.includes(tag)
+                            const isCustom = customTags.includes(tag)
 
                             return (
                                 <button
@@ -293,19 +315,60 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
                                     className={`px-4 py-2.5 rounded-full font-bold text-sm transition-all min-h-[44px] ${isSelected
                                             ? 'bg-blue-600 text-white shadow-md'
                                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                        }`}
+                                        } ${isCustom ? 'border-2 border-orange-300' : ''}`}
                                 >
-                                    {tag}
+                                    {tag} {isCustom && '⭐'}
                                 </button>
                             )
                         })}
+
+                        {/* Botón para agregar etiqueta personalizada */}
+                        {!showTagInput ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowTagInput(true)}
+                                className="px-4 py-2.5 rounded-full font-bold text-sm transition-all min-h-[44px] bg-green-50 text-green-700 border-2 border-green-300 hover:bg-green-100"
+                            >
+                                <Plus className="w-4 h-4 inline mr-1" />
+                                Nueva
+                            </button>
+                        ) : (
+                            <div className="flex gap-2 items-center">
+                                <input
+                                    type="text"
+                                    value={newTagInput}
+                                    onChange={(e) => setNewTagInput(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomTag())}
+                                    placeholder="Nombre etiqueta..."
+                                    className="px-4 py-2 border-2 border-green-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-green-500 min-w-[150px]"
+                                    autoFocus
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddCustomTag}
+                                    className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center hover:bg-green-700 transition-colors"
+                                >
+                                    ✓
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowTagInput(false)
+                                        setNewTagInput('')
+                                    }}
+                                    className="w-10 h-10 bg-slate-200 text-slate-700 rounded-full flex items-center justify-center hover:bg-slate-300 transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
                     </div>
                     {selectedTags.length > 0 && (
                         <p className="text-xs text-blue-600 font-medium mt-2">
                             Seleccionadas: {selectedTags.join(', ')}
                         </p>
                     )}
-                    <p className="text-xs text-slate-500 mt-1">Selecciona todas las que apliquen (para filtrar en Excel)</p>
+                    <p className="text-xs text-slate-500 mt-1">Selecciona o crea nuevas etiquetas (para filtrar en Excel)</p>
                 </div>
 
                 {/* Descripción */}
@@ -329,7 +392,6 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
                             return (
                                 <div key={index} className="relative aspect-square">
                                     {photo ? (
-                                        // Estado con foto
                                         <div className="relative w-full h-full group">
                                             <img
                                                 src={photo.url}
@@ -345,7 +407,6 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
                                             </button>
                                         </div>
                                     ) : (
-                                        // Estado vacío
                                         <label className="w-full h-full bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center cursor-pointer hover:bg-slate-100 hover:border-slate-400 transition-colors">
                                             <input
                                                 type="file"
@@ -375,7 +436,9 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
                         >
                             <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
                                 <div className="flex items-center gap-2">
-                                    <AlertCircle className="w-5 h-5 text-red-600" />
+                                    <Alert
+
+                                        Circle className="w-5 h-5 text-red-600" />
                                     <span className="font-bold text-red-900">¿Hubo Reclamo/Merma?</span>
                                 </div>
                                 <button
@@ -392,7 +455,6 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
                                 </button>
                             </div>
 
-                            {/* Campos de reclamo */}
                             <AnimatePresence>
                                 {hasComplaint && (
                                     <motion.div
