@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Gauge, Save } from 'lucide-react'
-import { trucks } from '../data/mockData'
+import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus } from 'lucide-react'
 
-export default function RegistrarView({ onAddTransaction, showToast }) {
+export default function RegistrarView({ onAddTransaction, showToast, trucks }) {
     const [transactionType, setTransactionType] = useState('income')
     const [hasComplaint, setHasComplaint] = useState(false)
+    const [selectedTags, setSelectedTags] = useState([])
+    const [photos, setPhotos] = useState([])
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
-        truck: 'Volvo FH',
+        truck: trucks[0]?.plate || '',
         amount: '',
         description: '',
         category: 'Combustible',
@@ -28,6 +29,49 @@ export default function RegistrarView({ onAddTransaction, showToast }) {
         'Otros'
     ]
 
+    // Etiquetas exactas del cliente (hardcoded para Excel filtering)
+    const businessTags = [
+        'Carga Nocturna',
+        'Rural',
+        'Urbano',
+        'Cyber',
+        'IKEA',
+        'Segunda Vuelta PM',
+        'Retiros AM',
+        'Flete'
+    ]
+
+    const toggleTag = (tag) => {
+        if (selectedTags.includes(tag)) {
+            setSelectedTags(selectedTags.filter(t => t !== tag))
+        } else {
+            setSelectedTags([...selectedTags, tag])
+        }
+    }
+
+    const handlePhotoChange = (e, index) => {
+        const file = e.target.files[0]
+        if (!file) return
+
+        const newPhotos = [...photos]
+        newPhotos[index] = {
+            id: Date.now() + index,
+            file,
+            url: URL.createObjectURL(file)
+        }
+        setPhotos(newPhotos)
+    }
+
+    const removePhoto = (index) => {
+        const photo = photos[index]
+        if (photo) {
+            URL.revokeObjectURL(photo.url)
+        }
+        const newPhotos = [...photos]
+        newPhotos[index] = null
+        setPhotos(newPhotos)
+    }
+
     const handleSubmit = (e) => {
         e.preventDefault()
 
@@ -36,6 +80,9 @@ export default function RegistrarView({ onAddTransaction, showToast }) {
             return
         }
 
+        // Convertir tags a string separado por comas para Excel
+        const tagsString = selectedTags.join(', ')
+
         const transaction = {
             id: Date.now(),
             type: transactionType,
@@ -43,6 +90,8 @@ export default function RegistrarView({ onAddTransaction, showToast }) {
             truck: formData.truck,
             amount: parseFloat(formData.amount),
             description: formData.description || (transactionType === 'income' ? 'Flete' : formData.category),
+            tags: tagsString, // Para exportar a Excel filtrable
+            photos: photos.filter(Boolean).length,
             ...(transactionType === 'income' && hasComplaint && {
                 hasComplaint: true,
                 complaintDetails: {
@@ -73,6 +122,12 @@ export default function RegistrarView({ onAddTransaction, showToast }) {
             mileage: ''
         })
         setHasComplaint(false)
+        setSelectedTags([])
+        // Cleanup photo URLs
+        photos.forEach(photo => {
+            if (photo) URL.revokeObjectURL(photo.url)
+        })
+        setPhotos([])
     }
 
     const inputClass = "w-full h-12 px-4 border border-slate-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -127,18 +182,18 @@ export default function RegistrarView({ onAddTransaction, showToast }) {
                     />
                 </div>
 
-                {/* Camión */}
+                {/* Patente / Camión - Patente destacada */}
                 <div>
-                    <label className={labelClass}>Camión</label>
+                    <label className={labelClass}>Patente / Camión</label>
                     <select
                         value={formData.truck}
                         onChange={(e) => setFormData({ ...formData, truck: e.target.value })}
-                        className={inputClass}
+                        className={`${inputClass} font-bold`}
                         required
                     >
                         {trucks.map(truck => (
-                            <option key={truck.id} value={truck.model}>
-                                {truck.model} - {truck.plate}
+                            <option key={truck.id} value={truck.plate} className="font-bold">
+                                {truck.plate} - {truck.model}
                             </option>
                         ))}
                     </select>
@@ -223,6 +278,36 @@ export default function RegistrarView({ onAddTransaction, showToast }) {
                     />
                 </div>
 
+                {/* Etiquetas de Clasificación (Multi-Select Chips) */}
+                <div>
+                    <label className={labelClass}>Etiquetas de Clasificación</label>
+                    <div className="flex flex-wrap gap-2">
+                        {businessTags.map(tag => {
+                            const isSelected = selectedTags.includes(tag)
+
+                            return (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() => toggleTag(tag)}
+                                    className={`px-4 py-2.5 rounded-full font-bold text-sm transition-all min-h-[44px] ${isSelected
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                        }`}
+                                >
+                                    {tag}
+                                </button>
+                            )
+                        })}
+                    </div>
+                    {selectedTags.length > 0 && (
+                        <p className="text-xs text-blue-600 font-medium mt-2">
+                            Seleccionadas: {selectedTags.join(', ')}
+                        </p>
+                    )}
+                    <p className="text-xs text-slate-500 mt-1">Selecciona todas las que apliquen (para filtrar en Excel)</p>
+                </div>
+
                 {/* Descripción */}
                 <div>
                     <label className={labelClass}>Descripción</label>
@@ -230,8 +315,53 @@ export default function RegistrarView({ onAddTransaction, showToast }) {
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         className="w-full h-20 px-4 py-3 border border-slate-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        placeholder={transactionType === 'income' ? 'Ej: Flete Falabella' : `Ej: ${formData.category}`}
+                        placeholder={transactionType === 'income' ? 'Ej: Flete Falabella Quilicura' : `Ej: ${formData.category}`}
                     />
+                </div>
+
+                {/* Evidencia Fotográfica (Grid de 3 cuadrados) */}
+                <div>
+                    <label className={labelClass}>Evidencia Fotográfica</label>
+                    <div className="grid grid-cols-3 gap-3">
+                        {[0, 1, 2].map((index) => {
+                            const photo = photos[index]
+
+                            return (
+                                <div key={index} className="relative aspect-square">
+                                    {photo ? (
+                                        // Estado con foto
+                                        <div className="relative w-full h-full group">
+                                            <img
+                                                src={photo.url}
+                                                alt={`Evidencia ${index + 1}`}
+                                                className="w-full h-full object-cover rounded-lg border-2 border-slate-200"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removePhoto(index)}
+                                                className="absolute top-1 right-1 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        // Estado vacío
+                                        <label className="w-full h-full bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center cursor-pointer hover:bg-slate-100 hover:border-slate-400 transition-colors">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                onChange={(e) => handlePhotoChange(e, index)}
+                                                className="hidden"
+                                            />
+                                            <Plus className="w-12 h-12 text-slate-400" />
+                                        </label>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">Toca para abrir cámara o galería (máx 3 fotos)</p>
                 </div>
 
                 {/* Switch de Reclamo (solo para ingresos) */}
@@ -291,34 +421,10 @@ export default function RegistrarView({ onAddTransaction, showToast }) {
                                                 placeholder="Ej: Caja mojada en tránsito"
                                             />
                                         </div>
-
-                                        <button
-                                            type="button"
-                                            className="w-full h-12 bg-white border-2 border-red-300 text-red-700 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-red-50"
-                                        >
-                                            <Camera className="w-5 h-5" />
-                                            Adjuntar Foto Evidencia
-                                        </button>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
                         </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Botón Foto para Gastos */}
-                <AnimatePresence>
-                    {transactionType === 'expense' && (
-                        <motion.button
-                            type="button"
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="w-full h-12 bg-slate-100 border-2 border-slate-300 text-slate-700 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-slate-200"
-                        >
-                            <Camera className="w-5 h-5" />
-                            Adjuntar Foto Boleta/Vale
-                        </motion.button>
                     )}
                 </AnimatePresence>
 

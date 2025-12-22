@@ -3,7 +3,8 @@ import { Home, Plus, List, Truck } from 'lucide-react'
 export default function DesktopSidebar({ activeView, setActiveView }) {
     const navItems = [
         { id: 'registrar', label: 'Registrar Movimiento', icon: Plus },
-        { id: 'movimientos', label: 'Ver Movimientos', icon: List }
+        { id: 'movimientos', label: 'Ver Movimientos', icon: List },
+        { id: 'camiones', label: 'Gestión de Camiones', icon: Truck }
     ]
 
     return (
@@ -32,8 +33,8 @@ export default function DesktopSidebar({ activeView, setActiveView }) {
                             key={item.id}
                             onClick={() => setActiveView(item.id)}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                                 }`}
                         >
                             <Icon className="w-5 h-5" />

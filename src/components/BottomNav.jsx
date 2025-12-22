@@ -1,4 +1,4 @@
-import { Home, Plus, List } from 'lucide-react'
+import { Truck, Plus, List } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function BottomNav({ activeView, setActiveView }) {
@@ -16,12 +16,19 @@ export default function BottomNav({ activeView, setActiveView }) {
             icon: List,
             color: 'text-slate-600',
             activeBg: 'bg-slate-50'
+        },
+        {
+            id: 'camiones',
+            label: 'Camiones',
+            icon: Truck,
+            color: 'text-orange-600',
+            activeBg: 'bg-orange-50'
         }
     ]
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 md:hidden z-50 safe-area-bottom">
-            <div className="grid grid-cols-2 h-16">
+            <div className="grid grid-cols-3 h-16">
                 {navItems.map((item) => {
                     const Icon = item.icon
                     const isActive = activeView === item.id

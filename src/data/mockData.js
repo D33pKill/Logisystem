@@ -1,4 +1,4 @@
-// Datos de camiones
+// Datos de camiones - ahora editable desde la app
 export const trucks = [
     { id: 1, model: 'Volvo FH', plate: 'ABCD-12', driver: 'Juan Pérez', route: 'Santiago-Concepción', status: 'En Ruta', profit: 12500000 },
     { id: 2, model: 'Scania R500', plate: 'WXYZ-98', driver: 'Pedro González', route: 'Valparaíso-La Serena', status: 'En Espera', profit: 11800000 },

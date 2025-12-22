@@ -4,12 +4,14 @@ import BottomNav from './components/BottomNav'
 import DesktopSidebar from './components/DesktopSidebar'
 import RegistrarView from './views/RegistrarView'
 import MovimientosView from './views/MovimientosView'
+import CamionesView from './views/CamionesView'
 import Toast from './components/Toast'
-import { initialTransactions } from './data/mockData'
+import { initialTransactions, trucks as initialTrucks } from './data/mockData'
 
 function App() {
     const [activeView, setActiveView] = useState('registrar')
     const [transactions, setTransactions] = useState(initialTransactions)
+    const [trucks, setTrucks] = useState(initialTrucks)
     const [toast, setToast] = useState(null)
 
     const showToast = (message, type = 'success') => {
@@ -19,6 +21,16 @@ function App() {
 
     const handleAddTransaction = (transaction) => {
         setTransactions([transaction, ...transactions])
+    }
+
+    const handleAddTruck = (truck) => {
+        setTrucks([...trucks, truck])
+        showToast(`Camión ${truck.model} agregado correctamente`, 'success')
+    }
+
+    const handleDeleteTruck = (truckId) => {
+        setTrucks(trucks.filter(t => t.id !== truckId))
+        showToast('Camión eliminado', 'success')
     }
 
     return (
@@ -38,11 +50,20 @@ function App() {
                     <RegistrarView
                         onAddTransaction={handleAddTransaction}
                         showToast={showToast}
+                        trucks={trucks}
                     />
                 )}
 
                 {activeView === 'movimientos' && (
                     <MovimientosView transactions={transactions} />
+                )}
+
+                {activeView === 'camiones' && (
+                    <CamionesView
+                        trucks={trucks}
+                        onAddTruck={handleAddTruck}
+                        onDeleteTruck={handleDeleteTruck}
+                    />
                 )}
             </main>
 
