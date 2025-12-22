@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus, Map, AlertTriangle, User, Calendar, FileText, Upload } from 'lucide-react'
+import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus, Map, AlertTriangle, User, Calendar, FileText, Upload, Truck } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 export default function RegistrarView({ onAddTransaction, showToast, trucks, customTags = [], onAddCustomTag }) {
@@ -27,12 +27,25 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
         mileage: '', // Expense only
         selectedEmployee: '', // Para Sueldo/Anticipo
         mesPago: '', // Para Sueldo/Anticipo
-        liquidacionFile: null // Para Sueldo/Anticipo
+        liquidacionFile: null, // Para Sueldo/Anticipo
+        providerName: '', // Para Pago Proveedor
+        externalPlate: '' // Para Pago Proveedor
     })
 
-    const categories = ['Combustible', 'Peajes', 'Sueldo', 'Anticipo', 'Mantención', 'Multas', 'Indemnizaciones', 'Otros']
+    const categories = [
+        { value: 'Combustible', label: 'Combustible' },
+        { value: 'Peajes', label: 'Peajes' },
+        { value: 'Sueldo', label: 'Sueldo' },
+        { value: 'Anticipo', label: 'Anticipo' },
+        { value: 'Mantención', label: 'Mantención' },
+        { value: 'Multas', label: 'Multas' },
+        { value: 'Indemnizaciones', label: 'Indemnizaciones' },
+        { value: 'pago_proveedor', label: 'Pago Proveedor / Subcontrato' },
+        { value: 'Otros', label: 'Otros' }
+    ]
     
     const isSueldoOrAnticipo = formData.category === 'Sueldo' || formData.category === 'Anticipo'
+    const isPagoProveedor = formData.category === 'pago_proveedor'
     const predefinedTags = ['Carga Nocturna', 'Rural', 'Urbano', 'Cyber', 'IKEA', 'Segunda Vuelta PM', 'Retiros AM', 'Flete']
     const allTags = [...predefinedTags, ...customTags]
 
@@ -109,6 +122,24 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
             return
         }
 
+        // Validación para pago_proveedor
+        if (transactionType === 'expense' && isPagoProveedor) {
+            if (!formData.providerName || !formData.providerName.trim()) {
+                showToast('El nombre del proveedor es obligatorio', 'error')
+                return
+            }
+            if (!formData.externalPlate || !formData.externalPlate.trim()) {
+                showToast('La patente del camión externo es obligatoria', 'error')
+                return
+            }
+        }
+
+        // Validación para gastos internos (no pago_proveedor)
+        if (transactionType === 'expense' && !isPagoProveedor && !formData.truck) {
+            showToast('Debes seleccionar un camión', 'error')
+            return
+        }
+
         let finalPhotos = []
         let evidence = null
 
@@ -130,12 +161,12 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
             id: Date.now(),
             type: transactionType,
             date: formData.date,
-            truck: formData.truck,
+            truck: isPagoProveedor ? formData.externalPlate : formData.truck,
             amount: parseFloat(formData.amount),
 
             description: transactionType === 'income'
                 ? `Ruta #${formData.routeId}`
-                : (formData.description || formData.category),
+                : (formData.description || (isPagoProveedor ? `Pago a ${formData.providerName}` : formData.category)),
 
             routeId: formData.routeId,
             tags: tagsString,
@@ -164,6 +195,12 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                     liquidacionUrl: formData.liquidacionFile ? URL.createObjectURL(formData.liquidacionFile) : null
                 }
             }),
+            ...(transactionType === 'expense' && isPagoProveedor && {
+                providerDetails: {
+                    providerName: formData.providerName,
+                    externalPlate: formData.externalPlate
+                }
+            }),
             category: transactionType === 'expense' ? formData.category : null
         }
 
@@ -184,7 +221,9 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
             mileage: '',
             selectedEmployee: '',
             mesPago: '',
-            liquidacionFile: null
+            liquidacionFile: null,
+            providerName: '',
+            externalPlate: ''
         })
         setHasComplaint(false)
         setSelectedTags([])
@@ -364,22 +403,87 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Registro de Gasto</h3>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className={`grid gap-3 ${isPagoProveedor ? 'grid-cols-1' : 'grid-cols-2'}`}>
                             <div>
                                 <label className={labelClass}>Fecha</label>
                                 <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className={inputClass} required />
                             </div>
-                            <div>
-                                <label className={labelClass}>Patente</label>
-                                <select value={formData.truck} onChange={(e) => setFormData({ ...formData, truck: e.target.value })} className={inputClass} required>
-                                    {trucks.map(t => <option key={t.id} value={t.plate}>{t.plate}</option>)}
-                                </select>
-                            </div>
+                            {!isPagoProveedor && (
+                                <div>
+                                    <label className={labelClass}>Patente</label>
+                                    <select value={formData.truck} onChange={(e) => setFormData({ ...formData, truck: e.target.value })} className={inputClass} required>
+                                        {trucks.map(t => <option key={t.id} value={t.plate}>{t.plate}</option>)}
+                                    </select>
+                                </div>
+                            )}
                         </div>
+
+                        {/* Campos para Pago Proveedor */}
+                        {isPagoProveedor && (
+                            <AnimatePresence>
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200"
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Truck className="w-5 h-5 text-slate-600" />
+                                        <h4 className="font-bold text-slate-900">Datos del Proveedor</h4>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Nombre del Proveedor / Dueño <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.providerName}
+                                            onChange={(e) => setFormData({ ...formData, providerName: e.target.value })}
+                                            className={inputClass}
+                                            placeholder="Ej: Juan Pérez Transportes"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Patente del Camión Externo <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.externalPlate}
+                                            onChange={(e) => setFormData({ ...formData, externalPlate: e.target.value.toUpperCase() })}
+                                            className={inputClass}
+                                            placeholder="XX-XX-XX"
+                                            maxLength={8}
+                                            required
+                                        />
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
+                        )}
                         <div>
                             <label className={labelClass}>Categoría</label>
-                            <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value, selectedEmployee: '', mesPago: '', liquidacionFile: null })} className={inputClass} required>
-                                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            <select 
+                                value={formData.category} 
+                                onChange={(e) => setFormData({ 
+                                    ...formData, 
+                                    category: e.target.value, 
+                                    selectedEmployee: '', 
+                                    mesPago: '', 
+                                    liquidacionFile: null,
+                                    providerName: '',
+                                    externalPlate: ''
+                                })} 
+                                className={inputClass} 
+                                required
+                            >
+                                {categories.map(cat => (
+                                    <option key={cat.value} value={cat.value}>
+                                        {cat.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
