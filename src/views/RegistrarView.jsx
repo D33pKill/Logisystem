@@ -165,8 +165,8 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                             type="button"
                             onClick={() => setTransactionType('income')}
                             className={`h-12 rounded-lg font-bold text-base transition-all ${transactionType === 'income'
-                                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
                             <div className="flex items-center justify-center gap-2">
@@ -179,8 +179,8 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                             type="button"
                             onClick={() => setTransactionType('expense')}
                             className={`h-12 rounded-lg font-bold text-base transition-all ${transactionType === 'expense'
-                                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
                             <div className="flex items-center justify-center gap-2">
@@ -313,8 +313,8 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                                     type="button"
                                     onClick={() => toggleTag(tag)}
                                     className={`px-4 py-2.5 rounded-full font-bold text-sm transition-all min-h-[44px] ${isSelected
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                         } ${isCustom ? 'border-2 border-orange-300' : ''}`}
                                 >
                                     {tag} {isCustom && '⭐'}
@@ -436,9 +436,7 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                         >
                             <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
                                 <div className="flex items-center gap-2">
-                                    <Alert
-
-                                        Circle className="w-5 h-5 text-red-600" />
+                                    <AlertCircle className="w-5 h-5 text-red-600" />
                                     <span className="font-bold text-red-900">¿Hubo Reclamo/Merma?</span>
                                 </div>
                                 <button

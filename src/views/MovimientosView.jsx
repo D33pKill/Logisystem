@@ -1,17 +1,15 @@
 import { useState, useMemo } from 'react'
-import { Search, FileSpreadsheet, TrendingUp, TrendingDown, AlertTriangle, Calendar, Truck } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatCurrency, exportToExcel } from '../utils/helpers'
+import { Search, FileSpreadsheet, TrendingUp, TrendingDown, Calendar, Truck, AlertTriangle } from 'lucide-react'
 import MovementDetailModal from '../components/MovementDetailModal'
+import { formatCurrency, exportToExcel } from '../utils/helpers'
 
-export default function MovimientosView({ transactions }) {
+export default function MovimientosView({ transactions, showToast }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedMovement, setSelectedMovement] = useState(null)
 
-    // Filtrar transacciones
+    // Filtrar movimientos
     const filteredTransactions = useMemo(() => {
-        if (!searchQuery) return transactions
-
         const query = searchQuery.toLowerCase()
         return transactions.filter(t =>
             t.description.toLowerCase().includes(query) ||
@@ -29,7 +27,7 @@ export default function MovimientosView({ transactions }) {
     }, [transactions])
 
     const handleExport = () => {
-        const exportData = transactions.map(t => ({
+        const exportData = filteredTransactions.map(t => ({
             Fecha: t.date,
             Tipo: t.type === 'income' ? 'Ingreso' : 'Gasto',
             Descripción: t.description,
@@ -42,7 +40,7 @@ export default function MovimientosView({ transactions }) {
         }))
 
         exportToExcel(exportData, 'movimientos_logisystem')
-        alert('✅ Movimientos exportados a Excel')
+        showToast('✅ Movimientos exportados a Excel', 'success')
     }
 
     return (
