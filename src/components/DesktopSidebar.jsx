@@ -5,8 +5,8 @@ export default function DesktopSidebar({ activeView, setActiveView }) {
         { id: 'inicio', label: 'Inicio', icon: Home },
         { id: 'registrar', label: 'Registrar Movimiento', icon: Plus },
         { id: 'personal', label: 'Personal', icon: Users },
-        { id: 'movimientos', label: 'Ver Movimientos', icon: List },
-        { id: 'camiones', label: 'Gestión de Camiones', icon: Truck }
+        { id: 'flota', label: 'Flota', icon: Truck },
+        { id: 'movimientos', label: 'Ver Movimientos', icon: List }
     ]
 
     return (

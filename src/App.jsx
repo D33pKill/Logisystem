@@ -8,7 +8,6 @@ import RegistrarView from './views/RegistrarView'
 import PersonalView from './views/PersonalView'
 import FlotaView from './views/FlotaView'
 import MovimientosView from './views/MovimientosView'
-import CamionesView from './views/CamionesView'
 import Toast from './components/Toast'
 
 function AppContent() {
@@ -65,12 +64,6 @@ function AppContent() {
 
                 {activeView === 'movimientos' && (
                     <MovimientosView
-                        showToast={showToast}
-                    />
-                )}
-
-                {activeView === 'camiones' && (
-                    <CamionesView
                         showToast={showToast}
                     />
                 )}
