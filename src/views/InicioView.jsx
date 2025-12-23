@@ -1,8 +1,12 @@
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
-import { TrendingUp, TrendingDown, DollarSign, Users, Truck } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, Users, Truck, FileSpreadsheet, Download, AlertTriangle } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function InicioView({ onNavigate }) {
     const { transactions, employees, trucks } = useApp()
+    const [isExporting, setIsExporting] = useState(false)
 
     const totalIngresos = transactions
         .filter(t => t.type === 'income')
@@ -17,159 +21,314 @@ export default function InicioView({ onNavigate }) {
     const totalEmpleados = employees.length
     const totalCamiones = trucks.length
 
-    return (
-        <div className="max-w-4xl mx-auto pb-24">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-slate-900 mb-2">Dashboard</h1>
-                <p className="text-slate-600">Resumen general de la operación</p>
-            </div>
+    // Obtener incidencias de ejemplo
+    const incidencias = transactions
+        .filter(t => t.hasComplaint && t.complaintDetails)
+        .slice(0, 3)
+        .map(t => ({
+            id: t.id,
+            fecha: t.date,
+            ruta: t.routeId || 'N/A',
+            tipo: t.complaintDetails?.incidence_type || 'Merma',
+            descripcion: t.complaintDetails?.description || 'Sin descripción',
+            patente: t.truck,
+            responsable: t.complaintDetails?.responsible || 'N/A'
+        }))
 
-            {/* Accesos Rápidos - Administración */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <button
+    // Si no hay incidencias, crear datos de ejemplo
+    const incidenciasDisplay = incidencias.length > 0 ? incidencias.map(inc => ({
+        ...inc,
+        responsable: inc.responsable || 'N/A'
+    })) : [
+        { id: 1, fecha: '2024-12-20', ruta: '99420', tipo: 'Merma', descripcion: 'Caja mojada en tránsito', patente: 'ABCD-12', responsable: 'Juan Pérez' },
+        { id: 2, fecha: '2024-12-18', ruta: '99350', tipo: 'Rechazo', descripcion: 'Producto dañado', patente: 'WXYZ-98', responsable: 'María González' },
+        { id: 3, fecha: '2024-12-15', ruta: '99210', tipo: 'Daño', descripcion: 'Mercancía con golpes', patente: 'HJKL-34', responsable: 'Carlos Muñoz' }
+    ]
+
+    const handleExportExcel = async () => {
+        setIsExporting(true)
+        toast.loading('Procesando...', { id: 'export' })
+
+        // Simular generación de reporte
+        await new Promise(resolve => setTimeout(resolve, 1500))
+
+        // Simular descarga
+        const link = document.createElement('a')
+        link.href = '/reporte-incidencias.xlsx'
+        link.download = `reporte-incidencias-${new Date().toISOString().split('T')[0]}.xlsx`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        toast.success('Reporte descargado correctamente', { id: 'export' })
+        setIsExporting(false)
+    }
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    }
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                type: 'spring',
+                stiffness: 100,
+                damping: 15
+            }
+        }
+    }
+
+    return (
+        <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="max-w-6xl mx-auto pb-24"
+        >
+            <motion.div variants={itemVariants} className="mb-8">
+                <h1 className="text-3xl font-bold text-dark-text mb-2">Dashboard</h1>
+                <p className="text-dark-text2">Resumen general de la operación</p>
+            </motion.div>
+
+            {/* Accesos Rápidos - Administración - Adaptativo para Fold */}
+            <div className="grid grid-cols-1 fold:grid-cols-2 gap-4 mb-6">
+                <motion.button
+                    variants={itemVariants}
                     onClick={() => onNavigate && onNavigate('personal')}
-                    className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left group"
+                    className="glass-dark p-6 rounded-2xl border border-dark-border shadow-lg hover:shadow-xl transition-all text-left group"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                 >
                     <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                            <Users className="w-6 h-6 text-blue-600" />
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent/20 to-accent-light/20 flex items-center justify-center group-hover:from-accent/30 group-hover:to-accent-light/30 transition-colors">
+                            <Users className="w-6 h-6 text-accent" />
                         </div>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Administración</span>
+                        <span className="text-xs font-bold text-dark-text2 uppercase">Administración</span>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-1">Personal</h3>
-                    <p className="text-sm text-slate-600 mb-2">Gestión de Recursos Humanos</p>
-                    <p className="text-lg font-bold text-blue-600">
+                    <h3 className="text-xl font-bold text-dark-text mb-1">Personal</h3>
+                    <p className="text-sm text-dark-text2 mb-2">Gestión de Recursos Humanos</p>
+                    <p className="text-lg font-bold text-accent">
                         {totalEmpleados} {totalEmpleados === 1 ? 'empleado' : 'empleados'}
                     </p>
-                </button>
+                </motion.button>
 
-                <button
+                <motion.button
+                    variants={itemVariants}
                     onClick={() => onNavigate && onNavigate('flota')}
-                    className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left group"
+                    className="glass-dark p-6 rounded-2xl border border-dark-border shadow-lg hover:shadow-xl transition-all text-left group"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                 >
                     <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
-                            <Truck className="w-6 h-6 text-slate-600" />
+                        <div className="w-12 h-12 rounded-xl bg-dark-surface2 flex items-center justify-center group-hover:bg-dark-border/20 transition-colors">
+                            <Truck className="w-6 h-6 text-dark-text" />
                         </div>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Administración</span>
+                        <span className="text-xs font-bold text-dark-text2 uppercase">Administración</span>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-1">Flota</h3>
-                    <p className="text-sm text-slate-600 mb-2">Gestión de Camiones</p>
-                    <p className="text-lg font-bold text-slate-700">
+                    <h3 className="text-xl font-bold text-dark-text mb-1">Flota</h3>
+                    <p className="text-sm text-dark-text2 mb-2">Gestión de Camiones</p>
+                    <p className="text-lg font-bold text-dark-text">
                         {totalCamiones} {totalCamiones === 1 ? 'camión' : 'camiones'}
                     </p>
-                </button>
+                </motion.button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* KPI Ingresos */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            {/* KPIs Grid - Tarjetas de Resumen - Adaptativo para Fold */}
+            <motion.div 
+                className="grid grid-cols-1 fold:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
+                layout
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+                <motion.div 
+                    variants={itemVariants} 
+                    className="glass-dark p-6 rounded-2xl border border-dark-border shadow-lg hover:shadow-xl transition-all group"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                >
                     <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                            <TrendingUp className="w-6 h-6 text-emerald-600" />
+                        <div className="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
+                            <TrendingUp className="w-7 h-7 text-emerald-500" />
                         </div>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Ingresos</span>
+                        <span className="text-xs font-bold text-dark-text2 uppercase tracking-wider">Ingresos</span>
                     </div>
-                    <p className="text-3xl font-bold text-emerald-700">
+                    <motion.p 
+                        className="text-4xl font-bold text-emerald-500 mb-1"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                    >
                         ${totalIngresos.toLocaleString('es-CL')}
-                    </p>
-                </div>
+                    </motion.p>
+                    <p className="text-xs text-dark-text2">Total acumulado</p>
+                </motion.div>
 
-                {/* KPI Gastos */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <motion.div 
+                    variants={itemVariants} 
+                    className="glass-dark p-6 rounded-2xl border border-dark-border shadow-lg hover:shadow-xl transition-all group"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                >
                     <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
-                            <TrendingDown className="w-6 h-6 text-red-600" />
+                        <div className="w-14 h-14 rounded-xl bg-rose-500/20 flex items-center justify-center group-hover:bg-rose-500/30 transition-colors">
+                            <TrendingDown className="w-7 h-7 text-rose-500" />
                         </div>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Gastos</span>
+                        <span className="text-xs font-bold text-dark-text2 uppercase tracking-wider">Gastos</span>
                     </div>
-                    <p className="text-3xl font-bold text-red-700">
+                    <motion.p 
+                        className="text-4xl font-bold text-rose-500 mb-1"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 }}
+                    >
                         ${totalGastos.toLocaleString('es-CL')}
-                    </p>
-                </div>
+                    </motion.p>
+                    <p className="text-xs text-dark-text2">Total acumulado</p>
+                </motion.div>
 
-                {/* KPI Balance */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <motion.div 
+                    variants={itemVariants} 
+                    className="glass-dark p-6 rounded-2xl border border-dark-border shadow-lg hover:shadow-xl transition-all group"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                >
                     <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                            <DollarSign className="w-6 h-6 text-blue-600" />
+                        <div className="w-14 h-14 rounded-xl bg-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/30 transition-colors">
+                            <DollarSign className="w-7 h-7 text-amber-500" />
                         </div>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Balance</span>
+                        <span className="text-xs font-bold text-dark-text2 uppercase tracking-wider">Balance</span>
                     </div>
-                    <p className={`text-3xl font-bold ${balance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                    <motion.p 
+                        className={`text-4xl font-bold mb-1 ${balance >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4 }}
+                    >
                         ${balance.toLocaleString('es-CL')}
+                    </motion.p>
+                    <p className="text-xs text-dark-text2">
+                        {balance >= 0 ? 'Ganancia neta' : 'Pérdida neta'}
                     </p>
-                </div>
+                </motion.div>
+            </motion.div>
 
-                {/* KPI Empleados */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
-                            <Users className="w-6 h-6 text-slate-600" />
+            {/* Sección de Incidencias y Exportación */}
+            <motion.div variants={itemVariants} className="glass-dark rounded-2xl border border-dark-border shadow-lg p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                            <AlertTriangle className="w-5 h-5 text-red-400" />
                         </div>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Empleados</span>
+                        <h2 className="text-xl font-bold text-dark-text">Últimas Incidencias</h2>
                     </div>
-                    <p className="text-3xl font-bold text-slate-700">
-                        {totalEmpleados}
-                    </p>
+                    <motion.button
+                        onClick={handleExportExcel}
+                        disabled={isExporting}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-accent to-accent-light text-white rounded-xl font-semibold text-sm shadow-lg shadow-accent/30 hover:shadow-accent/50 transition-all disabled:opacity-50"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        {isExporting ? (
+                            <>
+                                <FileSpreadsheet className="w-4 h-4 animate-pulse" />
+                                <span>Generando...</span>
+                            </>
+                        ) : (
+                            <>
+                                <FileSpreadsheet className="w-4 h-4" />
+                                <Download className="w-4 h-4" />
+                                <span>Exportar Reporte (Excel)</span>
+                            </>
+                        )}
+                    </motion.button>
                 </div>
-
-                {/* KPI Camiones */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
-                            <Truck className="w-6 h-6 text-slate-600" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Camiones</span>
-                    </div>
-                    <p className="text-3xl font-bold text-slate-700">
-                        {totalCamiones}
-                    </p>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="border-b border-dark-border">
+                                <th className="text-left py-3 px-4 text-xs font-bold text-dark-text2 uppercase">Fecha</th>
+                                <th className="text-left py-3 px-4 text-xs font-bold text-dark-text2 uppercase">Ruta</th>
+                                <th className="text-left py-3 px-4 text-xs font-bold text-dark-text2 uppercase">Tipo</th>
+                                <th className="text-left py-3 px-4 text-xs font-bold text-dark-text2 uppercase hidden fold:table-cell">Descripción</th>
+                                <th className="text-left py-3 px-4 text-xs font-bold text-dark-text2 uppercase">Patente</th>
+                                <th className="text-left py-3 px-4 text-xs font-bold text-dark-text2 uppercase hidden lg:table-cell">Responsable</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {incidenciasDisplay.map((incidencia, index) => (
+                                <motion.tr
+                                    key={incidencia.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="border-b border-dark-border/50 hover:bg-dark-surface2/50 transition-colors"
+                                >
+                                    <td className="py-3 px-4 text-sm text-dark-text">{new Date(incidencia.fecha).toLocaleDateString('es-CL')}</td>
+                                    <td className="py-3 px-4 text-sm font-mono text-dark-text">{incidencia.ruta}</td>
+                                    <td className="py-3 px-4">
+                                        <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-semibold">
+                                            {incidencia.tipo}
+                                        </span>
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-dark-text2 hidden fold:table-cell">{incidencia.descripcion}</td>
+                                    <td className="py-3 px-4 text-sm font-mono text-dark-text">{incidencia.patente}</td>
+                                    <td className="py-3 px-4 text-sm text-dark-text2 hidden lg:table-cell">{incidencia.responsable || 'N/A'}</td>
+                                </motion.tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Movimientos Recientes */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <h2 className="text-lg font-bold text-slate-900 mb-4">Movimientos Recientes</h2>
+            <motion.div variants={itemVariants} className="glass-dark rounded-2xl border border-dark-border shadow-lg p-6">
+                <h2 className="text-xl font-bold text-dark-text mb-4">Movimientos Recientes</h2>
                 <div className="space-y-3">
-                    {transactions.slice(0, 5).map((transaction) => (
-                        <div
+                    {transactions.slice(0, 5).map((transaction, index) => (
+                        <motion.div
                             key={transaction.id}
-                            className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="flex items-center justify-between p-4 bg-dark-surface2 rounded-xl border border-dark-border hover:border-dark-border/80 transition-all"
                         >
                             <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                                     transaction.type === 'income' 
-                                        ? 'bg-emerald-100' 
-                                        : 'bg-red-100'
+                                        ? 'bg-emerald-500/20' 
+                                        : 'bg-red-500/20'
                                 }`}>
                                     {transaction.type === 'income' ? (
-                                        <TrendingUp className="w-5 h-5 text-emerald-600" />
+                                        <TrendingUp className="w-5 h-5 text-emerald-400" />
                                     ) : (
-                                        <TrendingDown className="w-5 h-5 text-red-600" />
+                                        <TrendingDown className="w-5 h-5 text-red-400" />
                                     )}
                                 </div>
                                 <div>
-                                    <p className="font-bold text-slate-900 text-sm">
+                                    <p className="font-bold text-dark-text text-sm">
                                         {transaction.description}
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-dark-text2">
                                         {new Date(transaction.date).toLocaleDateString('es-CL')} • {transaction.truck}
                                     </p>
                                 </div>
                             </div>
                             <p className={`font-bold ${
                                 transaction.type === 'income' 
-                                    ? 'text-emerald-700' 
-                                    : 'text-red-700'
+                                    ? 'text-emerald-400' 
+                                    : 'text-red-400'
                             }`}>
                                 {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString('es-CL')}
                             </p>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     )
 }
-

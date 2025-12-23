@@ -24,6 +24,13 @@ export const AppProvider = ({ children }) => {
         }
     ])
 
+    // Cuentas bancarias y financieras
+    const [accounts, setAccounts] = useState([
+        { id: 1, name: 'Banco Estado', type: 'banco', is_active: true },
+        { id: 2, name: 'Caja Chica', type: 'efectivo', is_active: true },
+        { id: 3, name: 'Santander', type: 'banco', is_active: true }
+    ])
+
     const [transactions, setTransactions] = useState(initialTransactions)
     
     // Flota de camiones (con estructura actualizada)
@@ -75,17 +82,29 @@ export const AppProvider = ({ children }) => {
         setTrucks(trucks.filter(t => t.id !== truckId))
     }
 
+    const addAccount = (account) => {
+        const newAccount = {
+            id: Date.now(),
+            ...account
+        }
+        setAccounts([...accounts, newAccount])
+        return newAccount
+    }
+
     const value = {
         employees,
         transactions,
         trucks,
+        accounts,
         addEmployee,
         addTransaction,
         addTruck,
         deleteTruck,
+        addAccount,
         setEmployees,
         setTransactions,
-        setTrucks
+        setTrucks,
+        setAccounts
     }
 
     return (

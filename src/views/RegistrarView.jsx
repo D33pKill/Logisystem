@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus, Map, AlertTriangle, User, Calendar, FileText, Upload, Truck } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import toast from 'react-hot-toast'
 
 export default function RegistrarView({ showToast, customTags = [], onAddCustomTag }) {
-    const { employees, trucks, addTransaction } = useApp()
+    const { employees, trucks, accounts, addTransaction } = useApp()
     const [transactionType, setTransactionType] = useState('income')
     const [hasComplaint, setHasComplaint] = useState(false)
     const [selectedTags, setSelectedTags] = useState([])
@@ -29,7 +30,14 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
         mesPago: '', // Para Sueldo/Anticipo
         liquidacionFile: null, // Para Sueldo/Anticipo
         providerName: '', // Para Pago Proveedor
-        externalPlate: '' // Para Pago Proveedor
+        externalPlate: '', // Para Pago Proveedor
+        accountId: '', // Cuenta (destino para ingresos, origen para gastos)
+        // Campos de incidencia
+        incidence_type: '',
+        item_count: '',
+        responsible: '',
+        incidence_photo_url: null,
+        document_url: null
     })
 
     const categories = [
@@ -117,9 +125,18 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
             return
         }
 
-        if (transactionType === 'income' && hasComplaint && !formData.description) {
-            showToast('Debes describir el problema/merma', 'error')
+        // Validación de cuenta
+        if (!formData.accountId) {
+            showToast(transactionType === 'income' ? 'Debes seleccionar una cuenta de destino' : 'Debes seleccionar una cuenta de origen', 'error')
             return
+        }
+
+        // Validación de incidencia
+        if (transactionType === 'income' && hasComplaint) {
+            if (!formData.incidence_type) {
+                showToast('Debes seleccionar el tipo de incidencia', 'error')
+                return
+            }
         }
 
         // Validación para pago_proveedor
@@ -173,11 +190,17 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
             photos: finalPhotos,
             evidence: evidence,
 
+            accountId: formData.accountId,
+            accountName: accounts.find(a => a.id.toString() === formData.accountId)?.name || '',
             ...(transactionType === 'income' && hasComplaint && {
                 hasComplaint: true,
                 complaintDetails: {
                     folio: 'N/A',
-                    description: formData.description
+                    description: formData.description,
+                    incidence_type: formData.incidence_type,
+                    item_count: formData.item_count ? parseInt(formData.item_count) : null,
+                    responsible: formData.responsible,
+                    document_url: formData.document_url ? URL.createObjectURL(formData.document_url) : null
                 }
             }),
 
@@ -204,13 +227,15 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
             category: transactionType === 'expense' ? formData.category : null
         }
 
-        // Usar addTransaction del contexto si está disponible, sino usar el prop
-        if (addTransaction) {
-            addTransaction(transaction)
-        } else {
-            onAddTransaction(transaction)
-        }
-        showToast(`${transactionType === 'income' ? 'Ingreso' : 'Gasto'} registrado correctamente`, 'success')
+        // Simular guardado con delay
+        const loadingToast = toast.loading('Guardando...', { id: 'save' })
+        
+        setTimeout(() => {
+            if (addTransaction) {
+                addTransaction(transaction)
+            }
+            toast.success(`${transactionType === 'income' ? 'Ingreso' : 'Gasto'} registrado correctamente`, { id: 'save' })
+            showToast(`${transactionType === 'income' ? 'Ingreso' : 'Gasto'} registrado correctamente`, 'success')
 
         setFormData({
             ...formData,
@@ -223,17 +248,23 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
             mesPago: '',
             liquidacionFile: null,
             providerName: '',
-            externalPlate: ''
+            externalPlate: '',
+            accountId: '',
+            incidence_type: '',
+            item_count: '',
+            responsible: '',
+            incidence_photo_url: null,
+            document_url: null
         })
         setHasComplaint(false)
         setSelectedTags([])
         setRoutePhotos([])
         setIncidentPhotos([])
         setExpensePhotos([])
+        }, 1000)
     }
 
     // Photo Grid - Force horizontal with explicit classes instead of dynamic string construction
-    // Fixed: grid-cols-${count} was not working because tailwind scans for full class names
     const renderPhotoGrid = (photosState, type, count = 4) => (
         <div className="grid grid-cols-4 gap-2">
             {Array.from({ length: count }).map((_, index) => {
@@ -242,13 +273,13 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                     <div key={index} className="relative aspect-square">
                         {photo ? (
                             <div className="relative w-full h-full group">
-                                <img src={photo.url} alt="Evidencia" className="w-full h-full object-cover rounded-lg border border-slate-200 shadow-sm" />
-                                <button type="button" onClick={() => removePhoto(index, type)} className="absolute -top-1 -right-1 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"><X className="w-3 h-3" /></button>
+                                <img src={photo.url} alt="Evidencia" className="w-full h-full object-cover rounded-lg border border-dark-border shadow-sm" />
+                                <button type="button" onClick={() => removePhoto(index, type)} className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"><X className="w-3 h-3" /></button>
                             </div>
                         ) : (
-                            <label className="w-full h-full bg-white border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition-all group">
+                            <label className="w-full h-full bg-dark-surface2 border-2 border-dashed border-dark-border rounded-xl flex items-center justify-center cursor-pointer hover:bg-dark-surface hover:border-accent/50 transition-all group">
                                 <input type="file" accept="image/*" capture="environment" onChange={(e) => handlePhotoChange(e, index, type)} className="hidden" />
-                                <Plus className="w-8 h-8 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                                <Plus className="w-8 h-8 text-dark-text2 group-hover:text-accent transition-colors" />
                             </label>
                         )}
                     </div>
@@ -257,33 +288,47 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
         </div>
     )
 
-    const inputClass = "w-full h-12 px-4 border border-slate-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-    const labelClass = "block text-sm font-bold text-slate-700 mb-1"
+    const inputClass = "w-full h-12 px-4 border border-dark-border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent bg-dark-surface2 text-dark-text placeholder-dark-text2 shadow-sm"
+    const labelClass = "block text-sm font-bold text-dark-text mb-1"
 
     return (
         <div className="max-w-2xl mx-auto pb-24">
             <form onSubmit={handleSubmit} className="space-y-6">
 
-                {/* TIPO DE MOVIMIENTO */}
-                <div className="grid grid-cols-2 gap-3">
-                    <button type="button" onClick={() => setTransactionType('income')}
-                        className={`h-14 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${transactionType === 'income' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                {/* TIPO DE MOVIMIENTO - Adaptativo para pantallas estrechas */}
+                <div className="grid grid-cols-2 gap-3 flex-wrap">
+                    <motion.button 
+                        type="button" 
+                        onClick={() => setTransactionType('income')}
+                        className={`h-14 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${transactionType === 'income' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-dark-surface2 text-dark-text2 hover:bg-dark-surface'}`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
                         <TrendingUp className="w-6 h-6" /> INGRESO
-                    </button>
-                    <button type="button" onClick={() => setTransactionType('expense')}
-                        className={`h-14 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${transactionType === 'expense' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                    </motion.button>
+                    <motion.button 
+                        type="button" 
+                        onClick={() => setTransactionType('expense')}
+                        className={`h-14 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${transactionType === 'expense' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-dark-surface2 text-dark-text2 hover:bg-dark-surface'}`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
                         <TrendingDown className="w-6 h-6" /> GASTO
-                    </button>
+                    </motion.button>
                 </div>
 
                 {transactionType === 'income' ? (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-                        {/* 1. SECCIÓN ENCABEZADO (Box con fondo blanco y borde suave) */}
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Datos Principales</h3>
+                        {/* 1. SECCIÓN ENCABEZADO */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="glass-dark p-5 rounded-2xl border border-dark-border shadow-lg space-y-4"
+                        >
+                            <h3 className="text-xs font-bold text-dark-text2 uppercase tracking-wider mb-2">Datos Principales</h3>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 fold:grid-cols-2 gap-4">
                                 <div>
                                     <label className={labelClass}>Fecha</label>
                                     <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className={inputClass} required />
@@ -303,7 +348,7 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                             <div>
                                 <label className={labelClass}>N° de Ruta / Folio <span className="text-red-500">*</span></label>
                                 <div className="relative">
-                                    <Map className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                                    <Map className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text2 w-5 h-5" />
                                     <input type="number" value={formData.routeId} onChange={(e) => setFormData({ ...formData, routeId: e.target.value })} className={`${inputClass} pl-10 font-bold text-lg`} placeholder="Ej: 99420" required />
                                 </div>
                             </div>
@@ -311,59 +356,103 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                             <div>
                                 <label className={labelClass}>Monto Total</label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                    <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className={`${inputClass} pl-8 text-emerald-700 font-bold text-lg`} placeholder="0" required />
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text2 font-bold">$</span>
+                                    <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className={`${inputClass} pl-8 text-emerald-400 font-bold text-lg`} placeholder="0" required />
                                 </div>
                             </div>
-                        </div>
 
-                        {/* 2. SECCIÓN RUTA (Box Gris Claro para Diferenciar) */}
-                        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-inner">
+                            <div>
+                                <label className={labelClass}>
+                                    Cuenta de Destino <span className="text-red-500">*</span>
+                                </label>
+                                <select 
+                                    value={formData.accountId} 
+                                    onChange={(e) => setFormData({ ...formData, accountId: e.target.value })} 
+                                    className={inputClass}
+                                    required
+                                >
+                                    <option value="">-- Seleccione una cuenta --</option>
+                                    {accounts.filter(acc => acc.is_active).map(account => (
+                                        <option key={account.id} value={account.id}>
+                                            {account.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-dark-text2 mt-1">¿Dónde entra la plata?</p>
+                            </div>
+                        </motion.div>
+
+                        {/* 2. SECCIÓN RUTA */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-dark-surface2 p-5 rounded-2xl border border-dark-border shadow-lg"
+                        >
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                                    <Camera className="w-4 h-4 text-slate-600" />
+                                <div className="w-8 h-8 rounded-full bg-dark-surface flex items-center justify-center">
+                                    <Camera className="w-4 h-4 text-dark-text" />
                                 </div>
-                                <h3 className="font-bold text-slate-700">Evidencia de Ruta</h3>
+                                <h3 className="font-bold text-dark-text">Evidencia de Ruta</h3>
                             </div>
 
                             {renderPhotoGrid(routePhotos, 'route', 4)}
 
-                            <div className="mt-6 pt-4 border-t border-slate-200">
+                            <div className="mt-6 pt-4 border-t border-dark-border">
                                 <label className={labelClass}>Etiquetas del Viaje</label>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     {allTags.map(tag => (
                                         <button key={tag} type="button" onClick={() => toggleTag(tag)}
-                                            className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all border shadow-sm ${selectedTags.includes(tag) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
+                                            className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all border shadow-sm ${selectedTags.includes(tag) ? 'bg-accent text-white border-accent' : 'bg-dark-surface text-dark-text2 border-dark-border hover:border-accent/50'}`}>
                                             {tag}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* 3. SWITCH PROBLEMA (Box Flotante) */}
-                        <div className={`p-4 rounded-xl border-2 transition-all shadow-sm ${hasComplaint ? 'bg-red-50 border-red-200' : 'bg-white border-slate-100'}`}>
+                        {/* 3. SWITCH INCIDENCIA/MERMA */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className={`p-4 rounded-xl border-2 transition-all shadow-sm ${hasComplaint ? 'bg-red-500/10 border-red-500/50' : 'glass-dark border-dark-border'}`}
+                        >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${hasComplaint ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${hasComplaint ? 'bg-red-500/20 text-red-400' : 'bg-dark-surface2 text-dark-text2'}`}>
                                         <AlertTriangle className="w-6 h-6" />
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className={`font-bold ${hasComplaint ? 'text-red-900' : 'text-slate-700'}`}>¿Hubo Merma o Problema?</span>
-                                        <span className="text-xs text-slate-500">Activa para reportar incidencias</span>
+                                        <span className={`font-bold ${hasComplaint ? 'text-red-400' : 'text-dark-text'}`}>¿Hubo Incidencia / Merma?</span>
+                                        <span className="text-xs text-dark-text2">Activa para reportar incidencias detalladas</span>
                                     </div>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setHasComplaint(!hasComplaint)}
-                                    className={`relative w-14 h-8 rounded-full transition-colors ${hasComplaint ? 'bg-red-500' : 'bg-slate-300'}`}
+                                    onClick={() => {
+                                        const newValue = !hasComplaint
+                                        setHasComplaint(newValue)
+                                        if (!newValue) {
+                                            setFormData({
+                                                ...formData,
+                                                incidence_type: '',
+                                                item_count: '',
+                                                responsible: '',
+                                                incidence_photo_url: null,
+                                                document_url: null
+                                            })
+                                            setIncidentPhotos([])
+                                        }
+                                    }}
+                                    className={`relative w-14 h-8 rounded-full transition-colors ${hasComplaint ? 'bg-red-500' : 'bg-dark-border'}`}
                                 >
                                     <motion.div className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-md" animate={{ left: hasComplaint ? '28px' : '4px' }} />
                                 </button>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* 4. SECCIÓN INCIDENCIA (Box Rojo) */}
+                        {/* 4. SECCIÓN INCIDENCIA DETALLADA (Box Rojo) */}
                         <AnimatePresence>
                             {hasComplaint && (
                                 <motion.div
@@ -372,28 +461,119 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                                     exit={{ opacity: 0, height: 0 }}
                                     className="overflow-hidden"
                                 >
-                                    <div className="bg-red-50 p-5 rounded-2xl border border-red-200 shadow-sm mt-2">
+                                    <div className="bg-red-500/10 p-5 rounded-2xl border border-red-500/50 shadow-lg mt-2">
                                         <div className="flex items-center gap-2 mb-4">
-                                            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                                                <AlertCircle className="w-4 h-4 text-red-600" />
+                                            <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                                                <AlertCircle className="w-4 h-4 text-red-400" />
                                             </div>
-                                            <h3 className="font-bold text-red-800">Detalle de Incidencia</h3>
+                                            <h3 className="font-bold text-red-400">Detalle de Incidencia / Merma</h3>
                                         </div>
 
                                         <div className="space-y-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-bold text-red-400 mb-1">
+                                                        Tipo de Incidencia <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        value={formData.incidence_type}
+                                                        onChange={(e) => setFormData({ ...formData, incidence_type: e.target.value })}
+                                                        className="w-full h-12 px-4 border border-red-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-dark-surface2 text-dark-text shadow-sm"
+                                                        required
+                                                    >
+                                                        <option value="">-- Seleccione --</option>
+                                                        <option value="Merma">Merma</option>
+                                                        <option value="Rechazo">Rechazo</option>
+                                                        <option value="Daño">Daño</option>
+                                                        <option value="Otro">Otro</option>
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-bold text-red-400 mb-1">
+                                                        Cantidad de Bultos Afectados
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={formData.item_count}
+                                                        onChange={(e) => setFormData({ ...formData, item_count: e.target.value })}
+                                                        className="w-full h-12 px-4 border border-red-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-dark-surface2 text-dark-text shadow-sm"
+                                                        placeholder="0"
+                                                        min="0"
+                                                    />
+                                                </div>
+                                            </div>
+
                                             <div>
-                                                <label className="block text-sm font-bold text-red-900 mb-1">Comentario del Problema</label>
-                                                <textarea
-                                                    value={formData.description}
-                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                    className="w-full h-24 px-4 py-3 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white shadow-sm"
-                                                    placeholder="Describe el daño, rechazo o problema..."
+                                                <label className="block text-sm font-bold text-red-400 mb-1">
+                                                    Responsable (Quien recibe/rechaza)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.responsible}
+                                                    onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
+                                                    className="w-full h-12 px-4 border border-red-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-dark-surface2 text-dark-text shadow-sm"
+                                                    placeholder="Nombre del responsable"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-bold text-red-900 mb-2">Fotos de Respaldo</label>
+                                                <label className="block text-sm font-bold text-red-400 mb-1">Comentario / Descripción</label>
+                                                <textarea
+                                                    value={formData.description}
+                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                    className="w-full h-24 px-4 py-3 border border-red-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-dark-surface2 text-dark-text shadow-sm"
+                                                    placeholder="Describe el daño, rechazo o problema en detalle..."
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-bold text-red-400 mb-2">Fotos de Evidencia</label>
                                                 {renderPhotoGrid(incidentPhotos, 'incident', 4)}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-bold text-red-400 mb-2">
+                                                    Adjuntar Excel / Informe de Rechazo
+                                                </label>
+                                                {formData.document_url ? (
+                                                    <div className="relative p-4 bg-dark-surface2 border-2 border-red-500/50 rounded-xl">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <FileText className="w-5 h-5 text-red-400" />
+                                                                <span className="text-sm font-bold text-red-300">
+                                                                    {formData.document_url.name || 'Documento adjuntado'}
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setFormData({ ...formData, document_url: null })}
+                                                                className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/30 transition-colors"
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <label className="block p-4 border-2 border-dashed border-red-500/50 rounded-xl cursor-pointer hover:bg-dark-surface2 hover:border-red-500/80 transition-all text-center bg-dark-surface2">
+                                                        <Upload className="w-6 h-6 text-red-400 mx-auto mb-2" />
+                                                        <span className="text-sm font-bold text-red-400">
+                                                            Subir Excel (.xlsx, .xls) o PDF
+                                                        </span>
+                                                        <input
+                                                            type="file"
+                                                            accept=".xlsx,.xls,.pdf"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files[0]
+                                                                if (file) {
+                                                                    setFormData({ ...formData, document_url: file })
+                                                                    toast.success(`Archivo "${file.name}" seleccionado`)
+                                                                }
+                                                            }}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -404,10 +584,14 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                     </div>
                 ) : (
                     // --- MODO GASTO ---
-                    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Registro de Gasto</h3>
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-5 glass-dark p-5 rounded-2xl border border-dark-border shadow-lg"
+                    >
+                        <h3 className="text-xs font-bold text-dark-text2 uppercase tracking-wider mb-2">Registro de Gasto</h3>
 
-                        <div className={`grid gap-3 ${isPagoProveedor ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        <div className={`grid gap-3 ${isPagoProveedor ? 'grid-cols-1' : 'grid-cols-1 fold:grid-cols-2'}`}>
                             <div>
                                 <label className={labelClass}>Fecha</label>
                                 <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className={inputClass} required />
@@ -433,11 +617,11 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200"
+                                    className="space-y-4 bg-dark-surface2 p-5 rounded-xl border border-dark-border"
                                 >
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Truck className="w-5 h-5 text-slate-600" />
-                                        <h4 className="font-bold text-slate-900">Datos del Proveedor</h4>
+                                        <Truck className="w-5 h-5 text-dark-text" />
+                                        <h4 className="font-bold text-dark-text">Datos del Proveedor</h4>
                                     </div>
 
                                     <div>
@@ -502,11 +686,11 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="space-y-4 bg-blue-50 p-5 rounded-xl border border-blue-200"
+                                    className="space-y-4 bg-accent/10 p-5 rounded-xl border border-accent/30"
                                 >
                                     <div className="flex items-center gap-2 mb-2">
-                                        <User className="w-5 h-5 text-blue-600" />
-                                        <h4 className="font-bold text-blue-900">Datos del Trabajador</h4>
+                                        <User className="w-5 h-5 text-accent" />
+                                        <h4 className="font-bold text-accent">Datos del Trabajador</h4>
                                     </div>
 
                                     <div>
@@ -529,7 +713,7 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                                     <div>
                                         <label className={labelClass}>Mes de Pago <span className="text-red-500">*</span></label>
                                         <div className="relative">
-                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text2 w-5 h-5" />
                                             <input
                                                 type="month"
                                                 value={formData.mesPago}
@@ -543,27 +727,27 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                                     <div>
                                         <label className={labelClass}>Adjuntar Liquidación</label>
                                         {formData.liquidacionFile ? (
-                                            <div className="relative p-4 bg-white border-2 border-blue-300 rounded-xl mt-2">
+                                            <div className="relative p-4 bg-dark-surface2 border-2 border-accent/50 rounded-xl mt-2">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2">
-                                                        <FileText className="w-5 h-5 text-blue-600" />
-                                                        <span className="text-sm font-bold text-blue-900">
+                                                        <FileText className="w-5 h-5 text-accent" />
+                                                        <span className="text-sm font-bold text-accent">
                                                             {formData.liquidacionFile.name}
                                                         </span>
                                                     </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => setFormData({ ...formData, liquidacionFile: null })}
-                                                        className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors"
+                                                        className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/30 transition-colors"
                                                     >
                                                         <X className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <label className="block p-4 border-2 border-dashed border-blue-300 rounded-xl cursor-pointer hover:bg-white hover:border-blue-400 transition-all text-center mt-2 bg-white">
-                                                <Upload className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                                                <span className="text-sm font-bold text-blue-700">
+                                            <label className="block p-4 border-2 border-dashed border-accent/50 rounded-xl cursor-pointer hover:bg-dark-surface2 hover:border-accent/80 transition-all text-center mt-2 bg-dark-surface2">
+                                                <Upload className="w-6 h-6 text-accent mx-auto mb-2" />
+                                                <span className="text-sm font-bold text-accent">
                                                     Subir Liquidación (PDF o Foto)
                                                 </span>
                                                 <input
@@ -573,6 +757,7 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                                                         const file = e.target.files[0]
                                                         if (file) {
                                                             setFormData({ ...formData, liquidacionFile: file })
+                                                            toast.success(`Archivo "${file.name}" seleccionado`)
                                                         }
                                                     }}
                                                     className="hidden"
@@ -585,14 +770,14 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                         ) : (
                             <>
                                 {formData.category === 'Combustible' && (
-                                    <div className="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                    <div className="grid grid-cols-2 gap-4 bg-accent/10 p-4 rounded-lg border border-accent/30">
                                         <div>
-                                            <label className="text-xs font-bold text-blue-800">Litros</label>
-                                            <input type="number" step="0.1" value={formData.liters} onChange={(e) => setFormData({ ...formData, liters: e.target.value })} className="w-full h-10 px-2 rounded border border-blue-200 bg-white" />
+                                            <label className="text-xs font-bold text-accent">Litros</label>
+                                            <input type="number" step="0.1" value={formData.liters} onChange={(e) => setFormData({ ...formData, liters: e.target.value })} className="w-full h-10 px-2 rounded border border-accent/30 bg-dark-surface2 text-dark-text" />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-blue-800">KM</label>
-                                            <input type="number" value={formData.mileage} onChange={(e) => setFormData({ ...formData, mileage: e.target.value })} className="w-full h-10 px-2 rounded border border-blue-200 bg-white" />
+                                            <label className="text-xs font-bold text-accent">KM</label>
+                                            <input type="number" value={formData.mileage} onChange={(e) => setFormData({ ...formData, mileage: e.target.value })} className="w-full h-10 px-2 rounded border border-accent/30 bg-dark-surface2 text-dark-text" />
                                         </div>
                                     </div>
                                 )}
@@ -605,21 +790,46 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                         )}
 
                         <div>
+                            <label className={labelClass}>
+                                Cuenta de Origen <span className="text-red-500">*</span>
+                            </label>
+                            <select 
+                                value={formData.accountId} 
+                                onChange={(e) => setFormData({ ...formData, accountId: e.target.value })} 
+                                className={inputClass}
+                                required
+                            >
+                                <option value="">-- Seleccione una cuenta --</option>
+                                {accounts.filter(acc => acc.is_active).map(account => (
+                                    <option key={account.id} value={account.id}>
+                                        {account.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-dark-text2 mt-1">¿De dónde sale la plata?</p>
+                        </div>
+
+                        <div>
                             <label className={labelClass}>Monto</label>
                             <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className={inputClass} placeholder="$0" required />
                         </div>
 
                         <div>
                             <label className={labelClass}>Nota (Opcional)</label>
-                            <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full h-20 px-4 py-2 border border-slate-300 rounded-lg bg-white" />
+                            <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full h-20 px-4 py-2 border border-dark-border rounded-lg bg-dark-surface2 text-dark-text placeholder-dark-text2" />
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
-                <button type="submit" className="w-full h-14 bg-slate-900 text-white rounded-xl font-bold text-lg shadow-xl shadow-slate-900/20 active:scale-[0.98] transition-all sticky bottom-4 z-20 hover:bg-slate-800">
+                <motion.button 
+                    type="submit" 
+                    className="w-full h-14 bg-gradient-to-r from-accent to-accent-light text-white rounded-xl font-bold text-lg shadow-xl shadow-accent/30 active:scale-[0.98] transition-all sticky bottom-4 z-20 hover:shadow-accent/50"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                >
                     <Save className="w-5 h-5 inline mr-2" />
                     Guardar
-                </button>
+                </motion.button>
             </form>
         </div>
     )

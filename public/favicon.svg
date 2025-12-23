@@ -1,0 +1,19 @@
+<svg width="32" height="32" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Marco Geométrico -->
+    <g stroke="#f59e0b" stroke-width="2" fill="none" opacity="0.5">
+        <path d="M100 5L130 30H160L190 55V80L160 105H130L100 130L70 105H40L10 80V55L40 30H70L100 5Z"/>
+        <path d="M100 20L120 35H140L160 50V70L140 85H120L100 100L80 85H60L40 70V50L60 35H80L100 20Z" fill="#f59e0b" opacity="0.2"/>
+    </g>
+    
+    <!-- Camión Mercedes -->
+    <g transform="translate(35, 45) scale(0.65)">
+        <path d="M180 100V40C180 34.4772 175.523 30 170 30H60C54.4772 30 50 34.4772 50 40V100C50 105.523 54.4772 110 60 110H170C175.523 110 180 105.523 180 100Z" fill="#f59e0b"/>
+        <path d="M180 60H195C200.523 60 205 64.4772 205 70V100C205 105.523 200.523 110 195 110H180V60Z" fill="#f59e0b" opacity="0.9"/>
+        <path d="M140 45H170V75H140V45Z" fill="#09090b" opacity="0.9"/>
+        <circle cx="75" cy="110" r="15" fill="#09090b" stroke="#f59e0b" stroke-width="4"/>
+        <circle cx="155" cy="110" r="15" fill="#09090b" stroke="#f59e0b" stroke-width="4"/>
+    </g>
+    
+    <!-- Banner -->
+    <path d="M20 120H180C185.523 120 190 124.477 190 130V140C190 145.523 185.523 150 180 150H20C14.4772 150 10 145.523 10 140V130C10 124.477 14.4772 120 20 120Z" fill="#f59e0b" opacity="0.9"/>
+</svg>

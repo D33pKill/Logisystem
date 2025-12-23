@@ -3,25 +3,55 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-slate-50 text-slate-800 antialiased;
-  }
+    html {
+        background-color: #09090b;
+    }
+    body {
+        @apply bg-[#09090b] text-[#e4e4e7] font-sans antialiased;
+    }
 }
 
 @layer utilities {
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-slate-100;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded-md;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400;
-  }
+    .glass-dark {
+        @apply bg-[#18181b]/80 backdrop-blur-xl border border-[#3f3f46]/50;
+    }
+    .bg-dark-surface {
+        @apply bg-[#18181b];
+    }
+    .bg-dark-surface2 {
+        @apply bg-[#27272a];
+    }
+    .bg-dark-bg {
+        @apply bg-[#09090b];
+    }
+    .border-dark-border {
+        @apply border-[#3f3f46];
+    }
+    .text-dark-text {
+        @apply text-[#e4e4e7];
+    }
+    .text-dark-text2 {
+        @apply text-[#a1a1aa];
+    }
+    .gradient-aurora {
+        background: linear-gradient(135deg, 
+            rgba(9, 9, 11, 0.95) 0%,
+            rgba(24, 24, 27, 0.9) 25%,
+            rgba(39, 39, 42, 0.85) 50%,
+            rgba(24, 24, 27, 0.9) 75%,
+            rgba(9, 9, 11, 0.95) 100%
+        );
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 8px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+        @apply bg-[#18181b];
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        @apply bg-[#3f3f46] rounded-md;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        @apply bg-[#52525b];
+    }
 }
