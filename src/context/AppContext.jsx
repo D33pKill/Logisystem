@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from 'react'
-import { initialTransactions } from '../data/mockData'
+import { initialTransactions, trucks as initialTrucks } from '../data/mockData'
 
 const AppContext = createContext()
 
@@ -25,6 +25,24 @@ export const AppProvider = ({ children }) => {
     ])
 
     const [transactions, setTransactions] = useState(initialTransactions)
+    
+    // Flota de camiones (con estructura actualizada)
+    const [trucks, setTrucks] = useState(
+        initialTrucks.map(truck => ({
+            id: truck.id,
+            plate: truck.plate,
+            model: truck.model || '',
+            is_own: true, // Por defecto son propios los existentes
+            provider_name: null,
+            truck_photo_url: null,
+            document_photo_url: null,
+            // Campos legacy para compatibilidad
+            driver: truck.driver,
+            route: truck.route,
+            status: truck.status,
+            profit: truck.profit
+        }))
+    )
 
     const addEmployee = (employee) => {
         const newEmployee = {
@@ -44,13 +62,30 @@ export const AppProvider = ({ children }) => {
         return newTransaction
     }
 
+    const addTruck = (truck) => {
+        const newTruck = {
+            id: Date.now(),
+            ...truck
+        }
+        setTrucks([...trucks, newTruck])
+        return newTruck
+    }
+
+    const deleteTruck = (truckId) => {
+        setTrucks(trucks.filter(t => t.id !== truckId))
+    }
+
     const value = {
         employees,
         transactions,
+        trucks,
         addEmployee,
         addTransaction,
+        addTruck,
+        deleteTruck,
         setEmployees,
-        setTransactions
+        setTransactions,
+        setTrucks
     }
 
     return (

@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Truck, Plus, Edit2, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useApp } from '../context/AppContext'
 
-export default function CamionesView({ trucks, onAddTruck, onDeleteTruck }) {
+export default function CamionesView({ showToast }) {
+    const { trucks, addTruck, deleteTruck } = useApp()
     const [showForm, setShowForm] = useState(false)
     const [formData, setFormData] = useState({
         model: '',
@@ -28,7 +30,8 @@ export default function CamionesView({ trucks, onAddTruck, onDeleteTruck }) {
             profit: 0
         }
 
-        onAddTruck(newTruck)
+        addTruck(newTruck)
+        showToast(`Camión ${newTruck.plate} agregado correctamente`, 'success')
 
         // Reset form
         setFormData({ model: '', plate: '', driver: '' })
@@ -175,7 +178,8 @@ export default function CamionesView({ trucks, onAddTruck, onDeleteTruck }) {
                                     <button
                                         onClick={() => {
                                             if (confirm(`¿Eliminar ${truck.model} (${truck.plate})?`)) {
-                                                onDeleteTruck(truck.id)
+                                                deleteTruck(truck.id)
+                                                showToast('Camión eliminado', 'success')
                                             }
                                         }}
                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

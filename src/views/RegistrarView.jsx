@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus, Map, AlertTriangle, User, Calendar, FileText, Upload, Truck } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
-export default function RegistrarView({ onAddTransaction, showToast, trucks, customTags = [], onAddCustomTag }) {
-    const { employees, addTransaction } = useApp()
+export default function RegistrarView({ showToast, customTags = [], onAddCustomTag }) {
+    const { employees, trucks, addTransaction } = useApp()
     const [transactionType, setTransactionType] = useState('income')
     const [hasComplaint, setHasComplaint] = useState(false)
     const [selectedTags, setSelectedTags] = useState([])
@@ -291,7 +291,11 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                                 <div>
                                     <label className={labelClass}>Patente</label>
                                     <select value={formData.truck} onChange={(e) => setFormData({ ...formData, truck: e.target.value })} className={`${inputClass} font-bold`} required>
-                                        {trucks.map(t => <option key={t.id} value={t.plate}>{t.plate}</option>)}
+                                        {trucks.filter(t => t.is_own !== false).map(t => (
+                                            <option key={t.id} value={t.plate}>
+                                                {t.plate} {t.model ? `- ${t.model}` : ''}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -412,7 +416,11 @@ export default function RegistrarView({ onAddTransaction, showToast, trucks, cus
                                 <div>
                                     <label className={labelClass}>Patente</label>
                                     <select value={formData.truck} onChange={(e) => setFormData({ ...formData, truck: e.target.value })} className={inputClass} required>
-                                        {trucks.map(t => <option key={t.id} value={t.plate}>{t.plate}</option>)}
+                                        {trucks.filter(t => t.is_own !== false).map(t => (
+                                            <option key={t.id} value={t.plate}>
+                                                {t.plate} {t.model ? `- ${t.model}` : ''}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             )}
