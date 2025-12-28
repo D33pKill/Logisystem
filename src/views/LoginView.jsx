@@ -16,8 +16,19 @@ export default function LoginView({ onLoginSuccess }) {
         e.preventDefault()
         setIsLoading(true)
 
-        // Simulación de login
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        // Validación de credenciales
+        const validEmail = 'admin@logisystem.cl'
+        const validPassword = 'demo123' // Puedes cambiar esto a lo que necesites
+
+        if (credentials.email !== validEmail || credentials.password !== validPassword) {
+            await new Promise(resolve => setTimeout(resolve, 800))
+            toast.error('Credenciales incorrectas')
+            setIsLoading(false)
+            return
+        }
+
+        // Simulación de login exitoso
+        await new Promise(resolve => setTimeout(resolve, 800))
 
         toast.success('¡Bienvenido a LogiSystem!')
         setIsLoading(false)

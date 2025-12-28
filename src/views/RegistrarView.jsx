@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { TrendingUp, TrendingDown, Camera, AlertCircle, Droplet, Save, X, Plus, Map, AlertTriangle, User, Calendar, FileText, Upload, Truck } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import toast from 'react-hot-toast'
+import AddAccountModal from '../components/AddAccountModal'
 
 export default function RegistrarView({ showToast, customTags = [], onAddCustomTag }) {
     const { employees, trucks, accounts, addTransaction } = useApp()
@@ -11,6 +12,7 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
     const [selectedTags, setSelectedTags] = useState([])
     const [newTagInput, setNewTagInput] = useState('')
     const [showTagInput, setShowTagInput] = useState(false)
+    const [showAddAccountModal, setShowAddAccountModal] = useState(false)
 
     // Separate photo states
     const [routePhotos, setRoutePhotos] = useState([])
@@ -39,6 +41,7 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
         incidence_photo_url: null,
         document_url: null
     })
+
 
     const categories = [
         { value: 'Combustible', label: 'Combustible' },
@@ -115,8 +118,10 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
     const handleSubmit = (e) => {
         e.preventDefault()
 
-        if (!formData.amount || parseFloat(formData.amount) <= 0) {
-            showToast('Ingresa un monto válido', 'error')
+        // Validación robusta de monto
+        const amountValue = parseFloat(formData.amount)
+        if (!formData.amount || isNaN(amountValue) || amountValue <= 0) {
+            showToast('Ingresa un monto válido mayor a cero', 'error')
             return
         }
 
@@ -234,8 +239,8 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
             if (addTransaction) {
                 addTransaction(transaction)
             }
-            toast.success(`${transactionType === 'income' ? 'Ingreso' : 'Gasto'} registrado correctamente`, { id: 'save' })
-            showToast(`${transactionType === 'income' ? 'Ingreso' : 'Gasto'} registrado correctamente`, 'success')
+            toast.success('Registro guardado correctamente', { id: 'save' })
+            showToast('Registro guardado correctamente', 'success')
 
         setFormData({
             ...formData,
@@ -362,9 +367,19 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                             </div>
 
                             <div>
-                                <label className={labelClass}>
-                                    Cuenta de Destino <span className="text-red-500">*</span>
-                                </label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className={labelClass}>
+                                        Cuenta de Destino <span className="text-red-500">*</span>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddAccountModal(true)}
+                                        className="text-xs text-accent hover:text-accent-light font-bold flex items-center gap-1 transition-colors"
+                                    >
+                                        <Plus className="w-3 h-3" />
+                                        Agregar cuenta
+                                    </button>
+                                </div>
                                 <select 
                                     value={formData.accountId} 
                                     onChange={(e) => setFormData({ ...formData, accountId: e.target.value })} 
@@ -790,9 +805,19 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                         )}
 
                         <div>
-                            <label className={labelClass}>
-                                Cuenta de Origen <span className="text-red-500">*</span>
-                            </label>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className={labelClass}>
+                                    Cuenta de Origen <span className="text-red-500">*</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddAccountModal(true)}
+                                    className="text-xs text-accent hover:text-accent-light font-bold flex items-center gap-1 transition-colors"
+                                >
+                                    <Plus className="w-3 h-3" />
+                                    Agregar cuenta
+                                </button>
+                            </div>
                             <select 
                                 value={formData.accountId} 
                                 onChange={(e) => setFormData({ ...formData, accountId: e.target.value })} 
@@ -831,6 +856,16 @@ export default function RegistrarView({ showToast, customTags = [], onAddCustomT
                     Guardar
                 </motion.button>
             </form>
+
+            {/* Modal para agregar cuenta */}
+            <AddAccountModal
+                isOpen={showAddAccountModal}
+                onClose={() => setShowAddAccountModal(false)}
+                onAccountAdded={(accountId) => {
+                    // Auto-seleccionar la cuenta recién creada
+                    setFormData({ ...formData, accountId: accountId.toString() })
+                }}
+            />
         </div>
     )
 }

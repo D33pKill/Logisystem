@@ -1,11 +1,13 @@
-import { Truck, Calendar, LogOut, Settings } from 'lucide-react'
+import { Truck, Calendar, LogOut, Settings, Plus, Building2 } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getCurrentDate } from '../utils/helpers'
 import Logo from './Logo'
+import AddAccountModal from './AddAccountModal'
 
 export default function MobileHeader({ onLogout, foldOptimization, onToggleFoldOptimization }) {
     const [showSettings, setShowSettings] = useState(false)
+    const [showAddAccountModal, setShowAddAccountModal] = useState(false)
     return (
         <>
             <header className="glass-dark border-b border-dark-border sticky top-0 z-40 backdrop-blur-xl transition-all duration-300">
@@ -21,11 +23,10 @@ export default function MobileHeader({ onLogout, foldOptimization, onToggleFoldO
                         </div>
                         <button
                             onClick={() => setShowSettings(!showSettings)}
-                            className={`p-2 rounded-lg transition-all ${
-                                showSettings 
-                                    ? 'bg-dark-surface2 text-amber-500' 
+                            className={`p-2 rounded-lg transition-all ${showSettings
+                                    ? 'bg-dark-surface2 text-amber-500'
                                     : 'text-dark-text2 hover:bg-dark-surface2'
-                            }`}
+                                }`}
                             title="Configuración"
                         >
                             <Settings className="w-5 h-5" />
@@ -85,9 +86,8 @@ export default function MobileHeader({ onLogout, foldOptimization, onToggleFoldO
                                         onClick={() => {
                                             onToggleFoldOptimization()
                                         }}
-                                        className={`relative w-14 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${
-                                            foldOptimization ? 'bg-amber-500' : 'bg-zinc-700'
-                                        }`}
+                                        className={`relative w-14 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${foldOptimization ? 'bg-amber-500' : 'bg-zinc-700'
+                                            }`}
                                     >
                                         <motion.div
                                             className="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-lg"
@@ -96,11 +96,36 @@ export default function MobileHeader({ onLogout, foldOptimization, onToggleFoldO
                                         />
                                     </button>
                                 </div>
+
+                                {/* Botón para agregar cuenta bancaria */}
+                                <button
+                                    onClick={() => {
+                                        setShowAddAccountModal(true)
+                                        setShowSettings(false)
+                                    }}
+                                    className="w-full flex items-center gap-3 p-4 rounded-lg bg-dark-surface2 border border-dark-border/50 hover:bg-dark-border/50 transition-colors text-left"
+                                >
+                                    <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                                        <Plus className="w-5 h-5 text-accent" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-semibold text-dark-text">Añadir Nueva Cuenta</p>
+                                        <p className="text-xs text-dark-text2">Crear cuenta bancaria o efectivo</p>
+                                    </div>
+                                    <Building2 className="w-5 h-5 text-dark-text2" />
+                                </button>
                             </div>
                         </motion.div>
                     </>
                 )}
             </AnimatePresence>
+
+            {/* Modal para agregar cuenta */}
+            <AddAccountModal
+                isOpen={showAddAccountModal}
+                onClose={() => setShowAddAccountModal(false)}
+            />
         </>
     )
 }
+

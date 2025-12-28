@@ -21,8 +21,8 @@ export default function InicioView({ onNavigate }) {
     const totalEmpleados = employees.length
     const totalCamiones = trucks.length
 
-    // Obtener incidencias de ejemplo
-    const incidencias = transactions
+    // Obtener incidencias reales de las transacciones
+    const incidenciasDisplay = transactions
         .filter(t => t.hasComplaint && t.complaintDetails)
         .slice(0, 3)
         .map(t => ({
@@ -32,35 +32,77 @@ export default function InicioView({ onNavigate }) {
             tipo: t.complaintDetails?.incidence_type || 'Merma',
             descripcion: t.complaintDetails?.description || 'Sin descripción',
             patente: t.truck,
-            responsable: t.complaintDetails?.responsible || 'N/A'
+            responsable: t.complaintDetails?.responsible || 'N/A',
+            folio: t.complaintDetails?.folio || 'N/A',
+            item_count: t.complaintDetails?.item_count || null
         }))
-
-    // Si no hay incidencias, crear datos de ejemplo
-    const incidenciasDisplay = incidencias.length > 0 ? incidencias.map(inc => ({
-        ...inc,
-        responsable: inc.responsable || 'N/A'
-    })) : [
-        { id: 1, fecha: '2024-12-20', ruta: '99420', tipo: 'Merma', descripcion: 'Caja mojada en tránsito', patente: 'ABCD-12', responsable: 'Juan Pérez' },
-        { id: 2, fecha: '2024-12-18', ruta: '99350', tipo: 'Rechazo', descripcion: 'Producto dañado', patente: 'WXYZ-98', responsable: 'María González' },
-        { id: 3, fecha: '2024-12-15', ruta: '99210', tipo: 'Daño', descripcion: 'Mercancía con golpes', patente: 'HJKL-34', responsable: 'Carlos Muñoz' }
-    ]
 
     const handleExportExcel = async () => {
         setIsExporting(true)
-        toast.loading('Procesando...', { id: 'export' })
+        toast.loading('Generando reporte CSV...', { id: 'export' })
 
-        // Simular generación de reporte
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        // Obtener todas las incidencias (no solo las 3 últimas)
+        const todasLasIncidencias = transactions
+            .filter(t => t.hasComplaint && t.complaintDetails)
+            .map(t => ({
+                Fecha: t.date,
+                Ruta: t.routeId || 'N/A',
+                Tipo: t.complaintDetails?.incidence_type || 'Merma',
+                Descripción: t.complaintDetails?.description || 'Sin descripción',
+                Patente: t.truck,
+                Responsable: t.complaintDetails?.responsible || 'N/A',
+                Folio: t.complaintDetails?.folio || 'N/A',
+                'Cantidad Afectada': t.complaintDetails?.item_count || '',
+                Monto: t.amount,
+                'Cuenta': t.accountName || 'N/A'
+            }))
 
-        // Simular descarga
+        // Si no hay incidencias, crear un array vacío con headers
+        const exportData = todasLasIncidencias.length > 0 
+            ? todasLasIncidencias 
+            : [{
+                Fecha: '',
+                Ruta: '',
+                Tipo: '',
+                Descripción: 'No hay incidencias registradas',
+                Patente: '',
+                Responsable: '',
+                Folio: '',
+                'Cantidad Afectada': '',
+                Monto: '',
+                'Cuenta': ''
+            }]
+
+        // Generar CSV
+        const headers = Object.keys(exportData[0] || {})
+        const csvContent = [
+            headers.join(','),
+            ...exportData.map(row => 
+                headers.map(header => {
+                    const value = row[header] || ''
+                    // Escapar valores con comas o comillas
+                    if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+                        return `"${value.replace(/"/g, '""')}"`
+                    }
+                    return value
+                }).join(',')
+            )
+        ].join('\n')
+
+        // Crear blob y descargar
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
         const link = document.createElement('a')
-        link.href = '/reporte-incidencias.xlsx'
-        link.download = `reporte-incidencias-${new Date().toISOString().split('T')[0]}.xlsx`
+        const url = URL.createObjectURL(blob)
+
+        link.setAttribute('href', url)
+        link.setAttribute('download', `reporte-incidencias-${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = 'hidden'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        URL.revokeObjectURL(url)
 
-        toast.success('Reporte descargado correctamente', { id: 'export' })
+        toast.success(`Reporte descargado correctamente (${todasLasIncidencias.length} incidencias)`, { id: 'export' })
         setIsExporting(false)
     }
 
@@ -260,7 +302,14 @@ export default function InicioView({ onNavigate }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {incidenciasDisplay.map((incidencia, index) => (
+                            {incidenciasDisplay.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="py-8 px-4 text-center text-dark-text2">
+                                        <p className="text-sm">No hay incidencias registradas</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                incidenciasDisplay.map((incidencia, index) => (
                                 <motion.tr
                                     key={incidencia.id}
                                     initial={{ opacity: 0, x: -20 }}
@@ -279,7 +328,8 @@ export default function InicioView({ onNavigate }) {
                                     <td className="py-3 px-4 text-sm font-mono text-dark-text">{incidencia.patente}</td>
                                     <td className="py-3 px-4 text-sm text-dark-text2 hidden lg:table-cell">{incidencia.responsable || 'N/A'}</td>
                                 </motion.tr>
-                            ))}
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

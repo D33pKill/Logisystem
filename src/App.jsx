@@ -28,9 +28,11 @@ function AppContent() {
     const shouldShowMobileHeader = !foldOptimization || (foldOptimization && windowWidth < 600)
 
     useEffect(() => {
-        // Siempre limpiar sesión al cargar para forzar login
-        localStorage.removeItem('logisystem_auth')
-        setIsAuthenticated(false)
+        // Verificar si hay sesión guardada
+        const savedAuth = localStorage.getItem('logisystem_auth')
+        if (savedAuth === 'true') {
+            setIsAuthenticated(true)
+        }
     }, [])
 
     const handleLoginSuccess = () => {

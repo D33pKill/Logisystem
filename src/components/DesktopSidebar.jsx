@@ -1,8 +1,11 @@
-import { Home, Plus, Users, List, Truck, LogOut, Smartphone } from 'lucide-react'
+import { Home, Plus, Users, List, Truck, LogOut, Smartphone, Building2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import Logo from './Logo'
+import AddAccountModal from './AddAccountModal'
 
 export default function DesktopSidebar({ activeView, setActiveView, onLogout, foldOptimization, onToggleFoldOptimization }) {
+    const [showAddAccountModal, setShowAddAccountModal] = useState(false)
     const navItems = [
         { id: 'inicio', label: 'Inicio', icon: Home },
         { id: 'registrar', label: 'Registrar Movimiento', icon: Plus },
@@ -58,7 +61,7 @@ export default function DesktopSidebar({ activeView, setActiveView, onLogout, fo
                 </div>
 
                 {/* Switch de Optimización para Plegables */}
-                <div className="px-4 py-3 rounded-lg bg-dark-surface2/50 border border-dark-border/50">
+                <div className="px-4 py-3 rounded-lg bg-dark-surface2/50 border border-dark-border/50 mb-2">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             <Smartphone className="w-4 h-4 text-amber-500" />
@@ -88,6 +91,21 @@ export default function DesktopSidebar({ activeView, setActiveView, onLogout, fo
                     </button>
                 </div>
 
+                {/* Botón para agregar cuenta bancaria */}
+                <button
+                    onClick={() => setShowAddAccountModal(true)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-dark-surface2/50 border border-dark-border/50 hover:bg-dark-border/50 transition-colors text-left mb-2"
+                >
+                    <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                        <Building2 className="w-4 h-4 text-accent" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-xs font-semibold text-dark-text">Añadir Nueva Cuenta</p>
+                        <p className="text-[10px] text-dark-text2">Crear cuenta bancaria o efectivo</p>
+                    </div>
+                    <Plus className="w-4 h-4 text-dark-text2" />
+                </button>
+
                 <button
                     onClick={onLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-dark-text2 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
@@ -95,7 +113,28 @@ export default function DesktopSidebar({ activeView, setActiveView, onLogout, fo
                     <LogOut className="w-5 h-5" />
                     <span className="font-medium">Cerrar Sesión</span>
                 </button>
+
+                {/* Banner de Modo Desarrollo */}
+                <div className="px-4 py-2 mt-2">
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                        <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">
+                            Modo Desarrollo
+                        </p>
+                        <p className="text-[9px] text-amber-400/80 leading-tight">
+                            Almacenamiento Local
+                        </p>
+                        <p className="text-[9px] text-dark-text2/70 leading-tight mt-1">
+                            Próxima fase: Migración a Nube Segura
+                        </p>
+                    </div>
+                </div>
             </div>
+
+            {/* Modal para agregar cuenta */}
+            <AddAccountModal
+                isOpen={showAddAccountModal}
+                onClose={() => setShowAddAccountModal(false)}
+            />
         </aside>
     )
 }

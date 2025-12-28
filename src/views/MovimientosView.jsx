@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, FileSpreadsheet, TrendingUp, TrendingDown, Calendar, Truck, AlertTriangle } from 'lucide-react'
+import { Search, FileSpreadsheet, TrendingUp, TrendingDown, Calendar, Truck, AlertTriangle, Ban } from 'lucide-react'
 import MovementDetailModal from '../components/MovementDetailModal'
 import { formatCurrency, exportToExcel } from '../utils/helpers'
 import { useApp } from '../context/AppContext'
 import toast from 'react-hot-toast'
 
 export default function MovimientosView({ showToast }) {
-    const { transactions } = useApp()
+    const { transactions, voidTransaction } = useApp()
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedMovement, setSelectedMovement] = useState(null)
 
@@ -24,10 +24,20 @@ export default function MovimientosView({ showToast }) {
 
     // Calcular resumen
     const summary = useMemo(() => {
-        const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
-        const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+        const activeTransactions = transactions.filter(t => t.status !== 'voided')
+        const income = activeTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+        const expense = activeTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
         return { income, expense, balance: income - expense }
     }, [transactions])
+
+    const handleVoid = (e, transaction) => {
+        e.stopPropagation() // Evitar abrir el modal de detalles
+
+        if (window.confirm('¿Estás seguro de anular este registro? Esto afectará los balances pero mantendrá el historial para la contadora.')) {
+            voidTransaction(transaction.id)
+            showToast('✅ Transacción anulada correctamente', 'success')
+        }
+    }
 
     const handleExport = () => {
         const exportData = filteredTransactions.map(t => ({
@@ -39,7 +49,8 @@ export default function MovimientosView({ showToast }) {
             Etiquetas: t.tags || '-',
             Monto: t.amount,
             Reclamo: t.hasComplaint ? 'SÍ' : 'NO',
-            Folio: t.complaintDetails?.folio || '-'
+            Folio: t.complaintDetails?.folio || '-',
+            Estado: t.status === 'voided' ? 'Anulado' : 'Activo'
         }))
 
         exportToExcel(exportData, 'movimientos_logisystem')
@@ -47,7 +58,7 @@ export default function MovimientosView({ showToast }) {
     }
 
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="max-w-6xl mx-auto space-y-6"
@@ -78,7 +89,7 @@ export default function MovimientosView({ showToast }) {
 
             {/* Resumen Financiero */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
@@ -88,7 +99,7 @@ export default function MovimientosView({ showToast }) {
                     <p className="text-2xl font-bold text-emerald-400 font-mono">{formatCurrency(summary.income)}</p>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
@@ -98,7 +109,7 @@ export default function MovimientosView({ showToast }) {
                     <p className="text-2xl font-bold text-red-400 font-mono">{formatCurrency(summary.expense)}</p>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
@@ -129,7 +140,7 @@ export default function MovimientosView({ showToast }) {
                                 transition={{ delay: index * 0.05 }}
                                 onClick={() => setSelectedMovement(transaction)}
                                 className={`glass-dark rounded-lg p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow ${transaction.hasComplaint ? 'border-2 border-red-500/50' : 'border border-dark-border'
-                                    }`}
+                                    } ${transaction.status === 'voided' ? 'opacity-50' : ''}`}
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between mb-3">
@@ -145,18 +156,35 @@ export default function MovimientosView({ showToast }) {
                                         )}
 
                                         <div>
-                                            <p className="font-bold text-dark-text">{transaction.description}</p>
+                                            <p className={`font-bold text-dark-text ${transaction.status === 'voided' ? 'line-through' : ''}`}>
+                                                {transaction.description}
+                                            </p>
                                             <div className="flex items-center gap-1 text-xs text-dark-text2">
                                                 <Calendar className="w-3 h-3" />
                                                 {transaction.date}
+                                                {transaction.status === 'voided' && (
+                                                    <span className="text-red-400 font-bold ml-2">ANULADO</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <p className={`text-xl font-bold font-mono ${transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
-                                        }`}>
-                                        {formatCurrency(transaction.amount)}
-                                    </p>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <p className={`text-xl font-bold font-mono ${transaction.status === 'voided' ? 'text-dark-text2 line-through' :
+                                                transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
+                                            }`}>
+                                            {formatCurrency(transaction.amount)}
+                                        </p>
+                                        {transaction.status !== 'voided' && (
+                                            <button
+                                                onClick={(e) => handleVoid(e, transaction)}
+                                                className="p-1 text-dark-text2 hover:text-red-400 transition-colors"
+                                                title="Anular transacción"
+                                            >
+                                                <Ban className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Details */}
@@ -195,6 +223,7 @@ export default function MovimientosView({ showToast }) {
                                 <th className="px-6 py-3 text-left text-xs font-bold text-dark-text2 uppercase">Camión</th>
                                 <th className="px-6 py-3 text-right text-xs font-bold text-dark-text2 uppercase">Monto</th>
                                 <th className="px-6 py-3 text-center text-xs font-bold text-dark-text2 uppercase">Estado</th>
+                                <th className="px-6 py-3 text-center text-xs font-bold text-dark-text2 uppercase">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-dark-border">
@@ -211,7 +240,7 @@ export default function MovimientosView({ showToast }) {
                                         key={transaction.id}
                                         onClick={() => setSelectedMovement(transaction)}
                                         className={`hover:bg-dark-surface2 transition-colors cursor-pointer ${transaction.hasComplaint ? 'bg-red-500/5' : ''
-                                            }`}
+                                            } ${transaction.status === 'voided' ? 'opacity-50' : ''}`}
                                     >
                                         <td className="px-6 py-4 text-sm text-dark-text2">{transaction.date}</td>
                                         <td className="px-6 py-4">
@@ -228,7 +257,9 @@ export default function MovimientosView({ showToast }) {
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <p className="font-medium text-dark-text">{transaction.description}</p>
+                                            <p className={`font-medium text-dark-text ${transaction.status === 'voided' ? 'line-through' : ''}`}>
+                                                {transaction.description}
+                                            </p>
                                             {transaction.category && (
                                                 <p className="text-xs text-dark-text2 mt-1">{transaction.category}</p>
                                             )}
@@ -241,19 +272,35 @@ export default function MovimientosView({ showToast }) {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-dark-text2">{transaction.truck}</td>
                                         <td className="px-6 py-4 text-right">
-                                            <span className={`font-bold font-mono ${transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
+                                            <span className={`font-bold font-mono ${transaction.status === 'voided' ? 'text-dark-text2 line-through' :
+                                                    transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
                                                 }`}>
                                                 {formatCurrency(transaction.amount)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            {transaction.hasComplaint ? (
+                                            {transaction.status === 'voided' ? (
+                                                <span className="inline-flex items-center gap-1 bg-gray-500/20 text-gray-400 px-2 py-1 rounded text-xs font-bold">
+                                                    ANULADO
+                                                </span>
+                                            ) : transaction.hasComplaint ? (
                                                 <div className="inline-flex items-center gap-1 bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs font-bold">
                                                     <AlertTriangle className="w-3 h-3" />
                                                     Reclamo #{transaction.complaintDetails?.folio || 'N/A'}
                                                 </div>
                                             ) : (
-                                                <span className="text-dark-text2 text-xs">-</span>
+                                                <span className="text-dark-text2 text-xs">OK</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            {transaction.status !== 'voided' && (
+                                                <button
+                                                    onClick={(e) => handleVoid(e, transaction)}
+                                                    className="p-2 text-dark-text2 hover:text-red-400 transition-colors rounded-full hover:bg-red-500/10"
+                                                    title="Anular transacción"
+                                                >
+                                                    <Ban className="w-4 h-4" />
+                                                </button>
                                             )}
                                         </td>
                                     </tr>
