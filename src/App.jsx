@@ -1,248 +1,104 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Toaster, toast } from 'react-hot-toast'
+import { Toaster } from 'react-hot-toast'
 import { AppProvider, useApp } from './context/AppContext'
-import { useFoldOptimization } from './hooks/useFoldOptimization'
-import { useWindowWidth } from './hooks/useWindowWidth'
 import LoginView from './views/LoginView'
-import MobileHeader from './components/MobileHeader'
 import BottomNav from './components/BottomNav'
 import DesktopSidebar from './components/DesktopSidebar'
 import InicioView from './views/InicioView'
-import RegistrarView from './views/RegistrarView'
+import OperacionesView from './views/OperacionesView'
 import PersonalView from './views/PersonalView'
-import FlotaView from './views/FlotaView'
-import MovimientosView from './views/MovimientosView'
+import AjustesView from './views/AjustesView'
+import PerfilView from './views/PerfilView'
+
+const toastConfig = {
+    duration: 3500,
+    style: {
+        background: '#18181b',
+        color: '#e4e4e7',
+        border: '1px solid #3f3f46',
+        fontSize: '15px',
+        padding: '14px 18px',
+    },
+    success: { iconTheme: { primary: '#d97706', secondary: '#fff' } },
+    error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+}
+
+const pageVariants = {
+    initial: { opacity: 0, y: 14 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.22 } },
+    exit: { opacity: 0, y: -8, transition: { duration: 0.14 } }
+}
 
 function AppContent() {
-    const { transactions, trucks } = useApp()
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const { currentUser, logout } = useApp()
     const [activeView, setActiveView] = useState('inicio')
-    const [customTags, setCustomTags] = useState([])
-    const [foldOptimization, toggleFoldOptimization] = useFoldOptimization()
-    const windowWidth = useWindowWidth()
-    
-    // Lógica: En modo clásico siempre mostrar BottomNav y MobileHeader, en modo adaptativo depender del ancho
-    const shouldShowSidebar = foldOptimization && windowWidth >= 600
-    const shouldShowBottomNav = !foldOptimization || (foldOptimization && windowWidth < 600)
-    const shouldShowMobileHeader = !foldOptimization || (foldOptimization && windowWidth < 600)
 
-    useEffect(() => {
-        // Verificar si hay sesión guardada
-        const savedAuth = localStorage.getItem('logisystem_auth')
-        if (savedAuth === 'true') {
-            setIsAuthenticated(true)
-        }
-    }, [])
+    useEffect(() => { setActiveView('inicio') }, [currentUser?.id])
 
-    const handleLoginSuccess = () => {
-        localStorage.setItem('logisystem_auth', 'true')
-        setIsAuthenticated(true)
-    }
-
-    const handleLogout = () => {
-        localStorage.removeItem('logisystem_auth')
-        setIsAuthenticated(false)
-        setActiveView('inicio')
-    }
-
-    const showToast = (message, type = 'success') => {
-        if (type === 'success') {
-            toast.success(message)
-        } else {
-            toast.error(message)
-        }
-    }
-
-    const handleAddCustomTag = (tag) => {
-        setCustomTags([...customTags, tag])
-    }
-
-    // Si no está autenticado, mostrar login
-    if (!isAuthenticated) {
+    if (!currentUser) {
         return (
             <>
-                <Toaster
-                    position="top-right"
-                    toastOptions={{
-                        duration: 3000,
-                        style: {
-                            background: '#18181b',
-                            color: '#e4e4e7',
-                            border: '1px solid #3f3f46',
-                        },
-                        success: {
-                            iconTheme: {
-                                primary: '#d97706',
-                                secondary: '#fff',
-                            },
-                        },
-                        error: {
-                            iconTheme: {
-                                primary: '#ef4444',
-                                secondary: '#fff',
-                            },
-                        },
-                    }}
-                />
-                <LoginView onLoginSuccess={handleLoginSuccess} />
+                <Toaster position="top-right" toastOptions={toastConfig} />
+                <LoginView onLoginSuccess={() => { }} />
             </>
         )
     }
 
-    // Transiciones de página
-    const pageVariants = {
-        initial: { opacity: 0, y: 20 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: -20 }
-    }
-
     return (
         <>
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 3000,
-                    style: {
-                        background: '#18181b',
-                        color: '#e4e4e7',
-                        border: '1px solid #3f3f46',
-                    },
-                    success: {
-                        iconTheme: {
-                            primary: '#d97706',
-                            secondary: '#fff',
-                        },
-                    },
-                    error: {
-                        iconTheme: {
-                            primary: '#ef4444',
-                            secondary: '#fff',
-                        },
-                    },
-                }}
-            />
-            <div className="min-h-screen bg-dark-bg">
-                {/* Mobile Header - Lógica condicional según toggle */}
-                {shouldShowMobileHeader && (
-                    <MobileHeader 
-                        onLogout={handleLogout}
-                        foldOptimization={foldOptimization}
-                        onToggleFoldOptimization={toggleFoldOptimization}
-                    />
-                )}
+            <Toaster position="top-right" toastOptions={toastConfig} />
 
-                {/* Desktop Sidebar - Lógica condicional según toggle */}
-                {shouldShowSidebar && (
-                    <DesktopSidebar
-                        activeView={activeView}
-                        setActiveView={setActiveView}
-                        onLogout={handleLogout}
-                        foldOptimization={foldOptimization}
-                        onToggleFoldOptimization={toggleFoldOptimization}
-                    />
-                )}
+            {/* Layout raíz: sidebar + contenido */}
+            <div className="flex min-h-screen bg-dark-bg">
 
-                {/* Main Content con transiciones - Adaptativo según toggle */}
-                <main className={`p-4 pb-20 transition-all duration-300 ${
-                    shouldShowSidebar ? 'ml-64 pb-4' : ''
-                }`}>
-                    <AnimatePresence mode="wait">
-                        {activeView === 'inicio' && (
-                            <motion.div
-                                key="inicio"
-                                variants={pageVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                                transition={{ duration: 0.3 }}
-                            >
-                                <InicioView onNavigate={setActiveView} />
-                            </motion.div>
-                        )}
+                {/* Sidebar — solo desktop (md+) */}
+                <DesktopSidebar activeView={activeView} setActiveView={setActiveView} />
 
-                        {activeView === 'registrar' && (
-                            <motion.div
-                                key="registrar"
-                                variants={pageVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                                transition={{ duration: 0.3 }}
-                            >
-                                <RegistrarView
-                                    showToast={showToast}
-                                    customTags={customTags}
-                                    onAddCustomTag={handleAddCustomTag}
-                                />
-                            </motion.div>
-                        )}
+                {/* Zona de contenido — empuja a la derecha del sidebar en desktop */}
+                <div className="flex-1 flex flex-col min-h-screen md:ml-64">
+                    <main className="flex-1 px-4 pt-2 pb-24 md:pb-8 md:px-8 md:pt-6 max-w-4xl mx-auto w-full">
+                        <AnimatePresence mode="wait">
+                            {activeView === 'inicio' && (
+                                <motion.div key="inicio" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+                                    <InicioView onNavigate={setActiveView} />
+                                </motion.div>
+                            )}
+                            {activeView === 'operaciones' && (
+                                <motion.div key="operaciones" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+                                    <OperacionesView onNavigate={setActiveView} />
+                                </motion.div>
+                            )}
+                            {activeView === 'personal' && (
+                                <motion.div key="personal" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+                                    <PersonalView />
+                                </motion.div>
+                            )}
+                            {activeView === 'ajustes' && (
+                                <motion.div key="ajustes" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+                                    <AjustesView />
+                                </motion.div>
+                            )}
+                            {activeView === 'perfil' && (
+                                <motion.div key="perfil" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+                                    <PerfilView onLogout={logout} onNavigate={setActiveView} />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </main>
 
-                        {activeView === 'personal' && (
-                            <motion.div
-                                key="personal"
-                                variants={pageVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                                transition={{ duration: 0.3 }}
-                            >
-                                <PersonalView
-                                    showToast={showToast}
-                                />
-                            </motion.div>
-                        )}
-
-                        {activeView === 'flota' && (
-                            <motion.div
-                                key="flota"
-                                variants={pageVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                                transition={{ duration: 0.3 }}
-                            >
-                                <FlotaView
-                                    showToast={showToast}
-                                />
-                            </motion.div>
-                        )}
-
-                        {activeView === 'movimientos' && (
-                            <motion.div
-                                key="movimientos"
-                                variants={pageVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                                transition={{ duration: 0.3 }}
-                            >
-                                <MovimientosView
-                                    showToast={showToast}
-                                />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </main>
-
-                {/* Mobile Bottom Navigation - Lógica condicional según toggle */}
-                {shouldShowBottomNav && (
-                    <BottomNav
-                        activeView={activeView}
-                        setActiveView={setActiveView}
-                    />
-                )}
+                    {/* Bottom Nav — solo mobile (oculto en md+) */}
+                    <BottomNav activeView={activeView} setActiveView={setActiveView} />
+                </div>
             </div>
         </>
     )
 }
 
-function App() {
+export default function App() {
     return (
         <AppProvider>
             <AppContent />
         </AppProvider>
     )
 }
-
-export default App

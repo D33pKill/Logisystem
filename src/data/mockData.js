@@ -1,133 +1,146 @@
-// Datos de camiones - ahora editable desde la app
-export const trucks = [
-    { id: 1, model: 'Volvo FH', plate: 'ABCD-12', driver: 'Juan Pérez', route: 'Santiago-Concepción', status: 'En Ruta', profit: 12500000 },
-    { id: 2, model: 'Scania R500', plate: 'WXYZ-98', driver: 'Pedro González', route: 'Valparaíso-La Serena', status: 'En Espera', profit: 11800000 },
-    { id: 3, model: 'Mercedes Actros', plate: 'HJKL-34', driver: 'Carlos Muñoz', route: 'Santiago-Puerto Montt', status: 'En Ruta', profit: 10200000 },
-    { id: 4, model: 'Volvo FH', plate: 'LMNO-56', driver: 'Diego Silva', route: 'Santiago-Iquique', status: 'Taller', profit: 9500000 },
-]
+// ========================================
+// TABLAS MAESTRAS (Datos Configurables)
+// ========================================
 
-// Transacciones iniciales con datos de ejemplo
-export const initialTransactions = [
+export const maestrosIniciales = {
+    bancos: [
+        { id: 1, nombre: 'Banco Estado', is_deleted: false },
+        { id: 2, nombre: 'Santander', is_deleted: false },
+        { id: 3, nombre: 'Banco de Chile', is_deleted: false },
+        { id: 4, nombre: 'Caja Chica', is_deleted: false },
+    ],
+    tiposOperacion: [
+        { id: 1, nombre: 'Sanday', is_deleted: false },
+        { id: 2, nombre: 'Victicket', is_deleted: false },
+        { id: 3, nombre: 'F3', is_deleted: false },
+        { id: 4, nombre: 'Lof 1 Estancilla', is_deleted: false },
+    ],
+    categoriasGasto: [
+        { id: 1, nombre: 'Combustible', is_deleted: false },
+        { id: 2, nombre: 'Peajes', is_deleted: false },
+        { id: 3, nombre: 'Mecánica', is_deleted: false },
+        { id: 4, nombre: 'Repuestos', is_deleted: false },
+        { id: 5, nombre: 'Sueldo Chofer', is_deleted: false },
+        { id: 6, nombre: 'Multas', is_deleted: false },
+    ]
+}
+
+// ========================================
+// FLOTA DE CAMIONES
+// ========================================
+
+export const camionesIniciales = [
     {
-        id: 1001,
-        type: 'income',
-        date: '2024-12-20',
-        truck: 'ABCD-12',
-        amount: 2450000,
-        description: 'Flete Falabella - Carga general',
-        tags: 'Carga Nocturna, Rural',
-        photos: [
-            'https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?w=400',
-            'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400',
-            'https://images.unsplash.com/photo-1619468129361-605ebea04b44?w=400'
-        ],
-        hasComplaint: true,
-        complaintDetails: {
-            folio: '9921',
-            description: 'Caja mojada en tránsito, merma de 2 unidades'
-        }
+        id: 1,
+        patente: 'ABCD-12',
+        modelo: 'Volvo FH',
+        tipo: 'propio',       // 'propio' | 'subcontratado'
+        proveedor: null,
+        is_deleted: false
     },
     {
-        id: 1002,
-        type: 'expense',
-        date: '2024-12-19',
-        truck: 'WXYZ-98',
-        amount: 850000,
-        description: 'Multa TAG - Exceso de peso',
-        category: 'Multas',
-        tags: ''
-    },
-    {
-        id: 1003,
-        type: 'expense',
-        date: '2024-12-18',
-        truck: 'ABCD-12',
-        amount: 380000,
-        description: 'Combustible Copec Ruta 5 Sur',
-        category: 'Combustible',
-        tags: 'Urbano',
-        fuelDetails: {
-            liters: 285,
-            mileage: 142850
-        }
-    },
-    {
-        id: 1004,
-        type: 'income',
-        date: '2024-12-17',
-        truck: 'HJKL-34',
-        amount: 3200000,
-        description: 'Flete Sodimac - Materiales construcción',
-        tags: 'IKEA, Flete',
-        hasComplaint: false
-    },
-    {
-        id: 1005,
-        type: 'expense',
-        date: '2024-12-16',
-        truck: 'HJKL-34',
-        amount: 125000,
-        description: 'Peajes Ruta del Maipo',
-        category: 'Peajes',
-        tags: ''
-    },
-    {
-        id: 1006,
-        type: 'expense',
-        date: '2024-12-15',
-        truck: 'WXYZ-98',
-        amount: 1500000,
-        description: 'Sueldo diciembre - Pedro González',
-        category: 'Sueldo Conductor',
-        tags: ''
-    },
-    {
-        id: 1007,
-        type: 'income',
-        date: '2024-12-14',
-        truck: 'ABCD-12',
-        amount: 1950000,
-        description: 'Flete Copec - Combustibles',
-        tags: 'Cyber, Segunda Vuelta PM',
-        hasComplaint: false
-    },
-    {
-        id: 1008,
-        type: 'expense',
-        date: '2024-12-13',
-        truck: 'ABCD-12',
-        amount: 450000,
-        description: 'Mantención preventiva - Cambio aceite y filtros',
-        category: 'Mantención',
-        tags: ''
-    },
-    {
-        id: 1009,
-        type: 'expense',
-        date: '2024-12-12',
-        truck: 'HJKL-34',
-        amount: 2100000,
-        description: 'Indemnización accidente menor',
-        category: 'Indemnizaciones',
-        tags: ''
-    },
-    {
-        id: 1010,
-        type: 'income',
-        date: '2024-12-11',
-        truck: 'WXYZ-98',
-        amount: 2800000,
-        description: 'Flete Walmart - Retail',
-        tags: 'Retiros AM',
-        hasComplaint: true,
-        complaintDetails: {
-            folio: '9856',
-            description: 'Retraso de 3 horas por tráfico, descuento aplicado'
-        }
+        id: 2,
+        patente: 'WXYZ-98',
+        modelo: 'Scania R500',
+        tipo: 'propio',
+        proveedor: null,
+        is_deleted: false
     }
 ]
 
-// Datos mensuales para gráficos (si se necesitan en el futuro)
+// ========================================
+// TARIFAS: camión × tipo de operación
+// ========================================
+// tarifa = lo que el camión cobra por ese tipo de ruta (costo para calcular utilidad)
+
+export const tarifasIniciales = [
+    { id: 1, camionId: 1, tipoOperacionId: 1, monto: 150000, is_deleted: false }, // ABCD-12 / Sanday
+    { id: 2, camionId: 1, tipoOperacionId: 2, monto: 180000, is_deleted: false }, // ABCD-12 / Victicket
+    { id: 3, camionId: 2, tipoOperacionId: 1, monto: 140000, is_deleted: false }, // WXYZ-98 / Sanday
+    { id: 4, camionId: 2, tipoOperacionId: 3, monto: 200000, is_deleted: false }, // WXYZ-98 / F3
+]
+
+// ========================================
+// CHOFERES / EMPLEADOS
+// ========================================
+
+export const empleadosIniciales = [
+    {
+        id: 1,
+        nombre: 'Pedro González',
+        rut: '12.345.678-9',
+        telefono: '+56 9 1234 5678',
+        email: 'pedro.gonzalez@transportes.cl',
+        cargo: 'Chofer',
+        estado: 'disponible',
+        tipoContrato: 'planta',        // 'planta' | 'externo'
+        fechaIngreso: '2022-03-15',
+        vencimientoLicencia: '2026-08-20',
+        notas: 'Chofer de confianza para rutas largas. Excelente manejo en ruta sur.',
+        is_deleted: false
+    },
+    {
+        id: 2,
+        nombre: 'Juan Pérez',
+        rut: '13.456.789-0',
+        telefono: '+56 9 8765 4321',
+        email: 'juan.perez@transportes.cl',
+        cargo: 'Chofer',
+        estado: 'disponible',
+        tipoContrato: 'externo',
+        fechaIngreso: '2023-07-01',
+        vencimientoLicencia: '2025-12-31',
+        notas: '',
+        is_deleted: false
+    }
+]
+
+// ========================================
+// FLETES (Ingresos de rutas)
+// ========================================
+
+export const fletesIniciales = []
+
+// ========================================
+// GASTOS
+// ========================================
+
+export const gastosIniciales = []
+
+// ========================================
+// ABONOS / ADELANTOS a choferes
+// ========================================
+
+export const abonosIniciales = []
+
+// ========================================
+// LOG DE AUDITORÍA
+// ========================================
+
+export const auditLogInicial = []
+
+// ========================================
+// USUARIOS DEL SISTEMA
+// ========================================
+
+export const USUARIOS = [
+    {
+        id: 1,
+        nombre: 'Fito (Administrador)',
+        email: 'admin@logisystem.cl',
+        password: 'admin123',
+        role: 'admin'
+    },
+    {
+        id: 2,
+        nombre: 'Operador',
+        email: 'operador@logisystem.cl',
+        password: 'op123',
+        role: 'operador'
+    }
+]
+
+// Datos mensuales para gráficos (futuro)
 export const monthlyData = [
     { month: 'Jul', income: 45000000, expense: 28000000 },
     { month: 'Ago', income: 48000000, expense: 30000000 },

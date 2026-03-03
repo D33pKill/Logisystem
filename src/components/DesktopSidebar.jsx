@@ -1,140 +1,108 @@
-import { Home, Plus, Users, List, Truck, LogOut, Smartphone, Building2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { Home, Plus, Users, Settings, User, Truck } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 import Logo from './Logo'
-import AddAccountModal from './AddAccountModal'
 
-export default function DesktopSidebar({ activeView, setActiveView, onLogout, foldOptimization, onToggleFoldOptimization }) {
-    const [showAddAccountModal, setShowAddAccountModal] = useState(false)
-    const navItems = [
-        { id: 'inicio', label: 'Inicio', icon: Home },
-        { id: 'registrar', label: 'Registrar Movimiento', icon: Plus },
-        { id: 'personal', label: 'Personal', icon: Users },
-        { id: 'flota', label: 'Flota', icon: Truck },
-        { id: 'movimientos', label: 'Ver Movimientos', icon: List }
-    ]
+const NAV_ITEMS = [
+    { id: 'inicio', label: 'Inicio', icon: Home, accent: null },
+    { id: 'operaciones', label: 'Operaciones', icon: Plus, accent: null },
+    { id: 'personal', label: 'Personal', icon: Users, accent: 'sky' },
+    { id: 'ajustes', label: 'Ajustes', icon: Settings, accent: null },
+    { id: 'perfil', label: 'Perfil', icon: User, accent: null },
+]
+
+export default function DesktopSidebar({ activeView, setActiveView }) {
+    const { currentUser, isAdmin } = useApp()
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-dark-surface border-r border-dark-border flex-col z-50 transition-all duration-300">
-            {/* Logo con animación de escala para Fold */}
-            <motion.div 
-                className="p-4 border-b border-dark-border"
-                layout
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-                <Logo size="small" showText={true} variant="horizontal" />
-            </motion.div>
+        <aside className="hidden md:flex flex-col fixed left-0 top-0 h-screen w-64 bg-zinc-950 border-r border-zinc-800/60 z-40">
+            {/* Logo */}
+            <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-800/60">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0">
+                    <Truck className="w-4 h-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                    <p className="font-black text-zinc-100 text-sm leading-tight">LogiSystem</p>
+                    <p className="text-zinc-600 text-[10px] leading-tight truncate">Transportes López</p>
+                </div>
+            </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2">
-                {navItems.map((item) => {
+            {/* Nav Items */}
+            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                {NAV_ITEMS.map((item) => {
                     const Icon = item.icon
                     const isActive = activeView === item.id
+                    const isPersonal = item.id === 'personal'
+
+                    const activeStyle = isPersonal
+                        ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
+                        : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+
+                    const inactiveStyle = isPersonal
+                        ? 'text-zinc-400 hover:bg-sky-500/5 hover:text-sky-300'
+                        : 'text-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-200'
 
                     return (
-                        <button
+                        <motion.button
                             key={item.id}
                             onClick={() => setActiveView(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                                isActive
-                                    ? 'bg-gradient-to-r from-accent to-accent-light text-white shadow-lg shadow-accent/20'
-                                    : 'text-dark-text2 hover:bg-dark-surface2 hover:text-dark-text'
-                            }`}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative group ${isActive ? activeStyle : inactiveStyle
+                                }`}
+                            whileHover={{ x: 2 }}
+                            whileTap={{ scale: 0.98 }}
                         >
-                            <Icon className="w-5 h-5" />
-                            <span className="font-medium">{item.label}</span>
-                        </button>
+                            {/* Active indicator */}
+                            {isActive && (
+                                <motion.div
+                                    layoutId="sidebarIndicator"
+                                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-r-full ${isPersonal ? 'bg-sky-400' : 'bg-amber-400'
+                                        }`}
+                                    transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                                />
+                            )}
+
+                            <Icon
+                                className={`flex-shrink-0 transition-colors ${isPersonal ? 'w-5 h-5' : 'w-4.5 h-4.5'
+                                    } ${isActive
+                                        ? isPersonal ? 'text-sky-400' : 'text-amber-400'
+                                        : isPersonal ? 'text-zinc-400 group-hover:text-sky-300' : ''
+                                    }`}
+                                style={{ width: isPersonal ? '22px' : '18px', height: isPersonal ? '22px' : '18px' }}
+                                strokeWidth={isActive ? 2.5 : 2}
+                            />
+
+                            <span className={`font-semibold text-sm ${isPersonal && isActive ? 'font-black' : ''}`}>
+                                {item.label}
+                            </span>
+
+                            {/* Badge Personal */}
+                            {isPersonal && !isActive && (
+                                <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400">
+                                    ★
+                                </span>
+                            )}
+                        </motion.button>
                     )
                 })}
             </nav>
 
-            {/* Footer */}
-            <div className="p-4 border-t border-dark-border space-y-2">
-                <div className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent-light rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm font-bold">T</span>
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-white text-sm font-medium">Tomás Admin</p>
-                        <p className="text-dark-text2 text-xs">Plan Básico</p>
-                    </div>
-                </div>
-
-                {/* Switch de Optimización para Plegables */}
-                <div className="px-4 py-3 rounded-lg bg-dark-surface2/50 border border-dark-border/50 mb-2">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            <Smartphone className="w-4 h-4 text-amber-500" />
-                            <span className="text-xs font-semibold text-dark-text">Optimización para Plegables</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-amber-500/70 uppercase tracking-wider">Beta</span>
-                    </div>
-                    <p className="text-[10px] text-dark-text2 mb-3 leading-tight">
-                        Activa el modo adaptativo para dispositivos plegables (Galaxy Fold)
-                    </p>
-                    <button
-                        onClick={onToggleFoldOptimization}
-                        className="w-full flex items-center justify-between p-2 rounded-lg bg-dark-surface hover:bg-dark-border/50 transition-colors"
-                    >
-                        <span className="text-xs text-dark-text2">
-                            {foldOptimization ? 'Modo Adaptativo' : 'Modo Clásico'}
-                        </span>
-                        <div className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
-                            foldOptimization ? 'bg-amber-500' : 'bg-zinc-700'
+            {/* User info bottom */}
+            <div className="px-4 py-4 border-t border-zinc-800/60">
+                <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 ${isAdmin ? 'bg-amber-500/20' : 'bg-zinc-800'
                         }`}>
-                            <motion.div
-                                className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-md"
-                                animate={{ left: foldOptimization ? '28px' : '4px' }}
-                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            />
-                        </div>
-                    </button>
-                </div>
-
-                {/* Botón para agregar cuenta bancaria */}
-                <button
-                    onClick={() => setShowAddAccountModal(true)}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-dark-surface2/50 border border-dark-border/50 hover:bg-dark-border/50 transition-colors text-left mb-2"
-                >
-                    <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                        <Building2 className="w-4 h-4 text-accent" />
+                        {isAdmin ? '👑' : '🚚'}
                     </div>
-                    <div className="flex-1">
-                        <p className="text-xs font-semibold text-dark-text">Añadir Nueva Cuenta</p>
-                        <p className="text-[10px] text-dark-text2">Crear cuenta bancaria o efectivo</p>
-                    </div>
-                    <Plus className="w-4 h-4 text-dark-text2" />
-                </button>
-
-                <button
-                    onClick={onLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-dark-text2 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
-                >
-                    <LogOut className="w-5 h-5" />
-                    <span className="font-medium">Cerrar Sesión</span>
-                </button>
-
-                {/* Banner de Modo Desarrollo */}
-                <div className="px-4 py-2 mt-2">
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
-                        <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">
-                            Modo Desarrollo
+                    <div className="min-w-0">
+                        <p className="text-xs font-bold text-zinc-300 truncate leading-tight">
+                            {currentUser?.nombre?.split(' ')[0]}
                         </p>
-                        <p className="text-[9px] text-amber-400/80 leading-tight">
-                            Almacenamiento Local
-                        </p>
-                        <p className="text-[9px] text-dark-text2/70 leading-tight mt-1">
-                            Próxima fase: Migración a Nube Segura
+                        <p className={`text-[10px] truncate leading-tight ${isAdmin ? 'text-amber-500' : 'text-zinc-500'}`}>
+                            {isAdmin ? 'Administrador' : 'Operador'}
                         </p>
                     </div>
                 </div>
             </div>
-
-            {/* Modal para agregar cuenta */}
-            <AddAccountModal
-                isOpen={showAddAccountModal}
-                onClose={() => setShowAddAccountModal(false)}
-            />
         </aside>
     )
 }
