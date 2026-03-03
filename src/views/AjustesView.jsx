@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useApp } from '../context/AppContext'
-import { Plus, Trash2, Truck, Settings, Tag, CreditCard, ChevronDown, ChevronUp, Lock, DollarSign, Check, X } from 'lucide-react'
+import { Plus, Trash2, Truck, Settings, Tag, CreditCard, ChevronDown, ChevronUp, Lock, DollarSign, Check, X, AlertTriangle, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const fmt = (n) => `$${Number(n || 0).toLocaleString('es-CL')}`
@@ -204,8 +204,9 @@ const SECCIONES = [
 ]
 
 export default function AjustesView() {
-    const { isAdmin, maestros, addMaestro, deleteMaestro } = useApp()
+    const { isAdmin, maestros, addMaestro, deleteMaestro, resetToFactory } = useApp()
     const [activeSection, setActiveSection] = useState('flota')
+    const [showReset, setShowReset] = useState(false)
 
     if (!isAdmin) {
         return (
@@ -283,6 +284,61 @@ export default function AjustesView() {
                         />
                     )}
                 </motion.div>
+            </AnimatePresence>
+
+            {/* ── ZONA DE PELIGRO ── */}
+            <div className="mt-8 p-4 border border-rose-500/30 rounded-2xl bg-rose-500/5">
+                <div className="flex items-center gap-2 mb-3">
+                    <AlertTriangle className="w-5 h-5 text-rose-400" />
+                    <h3 className="text-sm font-black text-rose-400 uppercase tracking-wider">Zona de Peligro</h3>
+                </div>
+                <p className="text-xs text-zinc-500 mb-4">
+                    Borra todos los datos registrados y restaura la app al estado inicial de fábrica.
+                    <strong className="text-rose-400"> Esta acción no se puede deshacer.</strong>
+                </p>
+                <motion.button
+                    onClick={() => setShowReset(true)}
+                    className="w-full h-11 flex items-center justify-center gap-2 bg-rose-500/10 border border-rose-500/40 text-rose-400 rounded-xl font-bold text-sm hover:bg-rose-500/20 transition-all"
+                    whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.97 }}
+                >
+                    <RotateCcw className="w-4 h-4" /> RESETEAR A DATOS DE FÁBRICA
+                </motion.button>
+            </div>
+
+            {/* Modal confirmación reset */}
+            <AnimatePresence>
+                {showReset && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setShowReset(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+                            className="relative z-10 w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-3xl p-6 text-center shadow-2xl"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-rose-500/15 flex items-center justify-center mx-auto mb-4">
+                                <AlertTriangle className="w-8 h-8 text-rose-400" />
+                            </div>
+                            <h3 className="text-lg font-black text-zinc-100 mb-2">¿Resetear todo?</h3>
+                            <p className="text-sm text-zinc-400 mb-6">
+                                Se borrarán <strong className="text-zinc-200">todos los registros</strong> y se volverá
+                                al estado de fábrica. Los datos no se pueden recuperar.
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => setShowReset(false)}
+                                    className="h-12 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-xl font-bold text-sm">
+                                    Cancelar
+                                </button>
+                                <motion.button
+                                    onClick={resetToFactory}
+                                    className="h-12 bg-rose-500 text-white rounded-xl font-black text-sm shadow-lg shadow-rose-500/30"
+                                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                                >
+                                    🗑️ Sí, Resetear
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
             </AnimatePresence>
         </div>
     )

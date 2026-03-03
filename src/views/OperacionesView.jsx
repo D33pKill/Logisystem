@@ -13,13 +13,15 @@ const TABS = [
 
 // ─── FORMULARIO FLETE ──────────────────────────────────────────────────────────
 function FleteForm({ onNavigate }) {
-    const { camiones, maestros, tarifas, addFlete, isAdmin, getTarifaValor } = useApp()
+    const { camiones, maestros, empleados, tarifas, addFlete, isAdmin, getTarifaValor } = useApp()
     const camionesActivos = camiones.filter(c => !c.is_deleted)
     const tiposOp = maestros.tiposOperacion.filter(t => !t.is_deleted)
+    const choferes = empleados.filter(e => !e.is_deleted)
 
     const [form, setForm] = useState({
         fecha: new Date().toISOString().split('T')[0],
         camionId: '',
+        empleadoId: '',
         folio: '',
         montoCliente: '',
         tipoOperacionId: '',
@@ -52,10 +54,11 @@ function FleteForm({ onNavigate }) {
             camionId: Number(form.camionId),
             tipoOperacionId: Number(form.tipoOperacionId),
             montoCliente: Number(form.montoCliente),
+            empleadoId: form.empleadoId ? Number(form.empleadoId) : null,
         })
-        toast.success('✅ Ruta registrada correctamente')
+        toast.success('✅ Ingreso registrado correctamente')
         setSaved(true)
-        setTimeout(() => { setSaved(false); setForm({ fecha: new Date().toISOString().split('T')[0], camionId: '', folio: '', montoCliente: '', tipoOperacionId: '', aplicarIva: false, descripcion: '' }) }, 2000)
+        setTimeout(() => { setSaved(false); setForm({ fecha: new Date().toISOString().split('T')[0], camionId: '', empleadoId: '', folio: '', montoCliente: '', tipoOperacionId: '', aplicarIva: false, descripcion: '' }) }, 2000)
     }
 
     if (saved) {
@@ -64,7 +67,7 @@ function FleteForm({ onNavigate }) {
                 <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
                     <CheckCircle className="w-10 h-10 text-emerald-400" />
                 </div>
-                <h3 className="text-xl font-bold text-zinc-200 mb-1">¡Ruta Guardada!</h3>
+                <h3 className="text-xl font-bold text-zinc-200 mb-1">¡Ingreso Guardado!</h3>
                 <p className="text-zinc-500 text-sm">El registro se guardó correctamente.</p>
             </motion.div>
         )
@@ -116,6 +119,18 @@ function FleteForm({ onNavigate }) {
                         <span className="text-xs text-zinc-500">Sin tarifa configurada para esta combinación.</span>
                     </motion.div>
                 )}
+            </div>
+
+            {/* Chofer Asignado */}
+            <div>
+                <label className="block text-sm font-bold text-zinc-300 mb-2">👷 Chofer Asignado <span className="text-zinc-600 font-normal">(opcional)</span></label>
+                <select value={form.empleadoId} onChange={e => set('empleadoId', e.target.value)}
+                    className="w-full h-14 px-4 bg-zinc-800/60 border-2 border-zinc-700 rounded-xl text-zinc-200 focus:outline-none focus:border-amber-500 transition-all text-base appearance-none">
+                    <option value="">— Sin chofer asignado —</option>
+                    {choferes.map(emp => (
+                        <option key={emp.id} value={emp.id}>{emp.nombre} · {emp.rut}</option>
+                    ))}
+                </select>
             </div>
 
             {/* Folio */}
@@ -194,7 +209,7 @@ function FleteForm({ onNavigate }) {
             <motion.button type="submit"
                 className="w-full h-14 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl font-black text-lg shadow-lg shadow-amber-500/30"
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-                💾 GUARDAR RUTA
+                💾 GUARDAR INGRESO
             </motion.button>
         </form>
     )

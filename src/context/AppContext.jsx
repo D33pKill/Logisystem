@@ -228,6 +228,7 @@ export const AppProvider = ({ children }) => {
     // ─── FLETES ────────────────────────────────────────────────────────────────
     const addFlete = (data) => {
         const camion = camiones.find(c => c.id === data.camionId)
+        const empleado = empleados.find(e => e.id === data.empleadoId)
         const tarifa = getTarifaValor(data.camionId, data.tipoOperacionId)
         const montoBase = data.aplicarIva ? Math.round(data.montoCliente / 1.19) : data.montoCliente
         const utilidad = tarifa !== null ? montoBase - tarifa : null
@@ -237,6 +238,8 @@ export const AppProvider = ({ children }) => {
             fecha: data.fecha,
             camionId: data.camionId,
             patente: camion?.patente || 'N/A',
+            empleadoId: data.empleadoId || null,
+            nombreEmpleado: empleado?.nombre || null,
             folio: data.folio,
             montoCliente: data.montoCliente,
             tipoOperacionId: data.tipoOperacionId,
@@ -250,7 +253,7 @@ export const AppProvider = ({ children }) => {
             creadoEn: new Date().toISOString()
         }
         setFletesState(prev => [nuevo, ...prev])
-        logAction('Registró flete', `Folio ${data.folio} - Patente ${nuevo.patente}`)
+        logAction('Registró ingreso', `Folio ${data.folio} - Patente ${nuevo.patente}${empleado ? ' - ' + empleado.nombre : ''}`)
         return nuevo
     }
 
@@ -340,14 +343,27 @@ export const AppProvider = ({ children }) => {
 
     // ─── LIQUIDACIÓN ───────────────────────────────────────────────────────────
     const getLiquidacionEmpleado = (empleadoId, mes) => {
-        // Suma de fletes donde el empleado es el responsable (por camión asignado)
-        // En esta versión: los fletes no tienen chofer directo, 
-        // pero los abonos sí están ligados al empleado
-        const abonosMes = abonos
-            .filter(a => a.empleadoId === empleadoId && a.mes === mes && !a.is_deleted)
-            .reduce((sum, a) => sum + a.monto, 0)
+        const fletesEmp = fletes.filter(
+            f => f.empleadoId === empleadoId && f.fecha?.startsWith(mes) && !f.is_deleted
+        )
+        const abonosEmp = abonos.filter(
+            a => a.empleadoId === empleadoId && a.mes === mes && !a.is_deleted
+        )
+        const totalFletes = fletesEmp.reduce((s, f) => s + (f.montoCliente || 0), 0)
+        const totalAbonos = abonosEmp.reduce((s, a) => s + a.monto, 0)
+        return {
+            fletesEmp,
+            abonosEmp,
+            totalFletes,
+            totalAbonos,
+            liquido: totalFletes - totalAbonos
+        }
+    }
 
-        return { totalAbonos: abonosMes }
+    // ─── RESET FACTORY ─────────────────────────────────────────────────────────
+    const resetToFactory = () => {
+        Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key))
+        window.location.reload()
     }
 
     const value = {
@@ -404,6 +420,9 @@ export const AppProvider = ({ children }) => {
         // KPIs
         getKPIs,
         getMesActual,
+
+        // Sistema
+        resetToFactory,
     }
 
     return (

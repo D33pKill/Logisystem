@@ -172,11 +172,9 @@ function DetalleTrabajador({ empleado, onClose, isAdmin, onUpdate }) {
     const estado = ESTADO_CONFIG[empleado.estado] || ESTADO_CONFIG.disponible
     const mesActual = getMesActual()
 
-    // Fletes del mes para este empleado (por patente, ya que flete no tiene empleadoId directo)
-    // Se muestran todos los fletes del mes si la patente del empleado coincide,
-    // o todos los fletes del mes si no hay criterio de patente
+    // Fletes del mes para este empleado (filtrados por empleadoId)
     const fletesDelMes = fletes.filter(f =>
-        !f.is_deleted && f.fecha?.startsWith(mesActual)
+        !f.is_deleted && f.fecha?.startsWith(mesActual) && f.empleadoId === empleado.id
     )
     const abonosDelMes = abonos.filter(a =>
         !a.is_deleted && a.empleadoId === empleado.id && a.mes === mesActual
@@ -510,12 +508,13 @@ function PanelLiquidaciones() {
 
     const abonosDe = (empId) => abonos.filter(a => a.empleadoId === empId && a.mes === mesActual && !a.is_deleted)
     const totalAbonos = (empId) => abonosDe(empId).reduce((s, a) => s + a.monto, 0)
-    const fletesDelMes = fletes.filter(f => !f.is_deleted && f.fecha?.startsWith(mesActual))
+    const fletesDelMes = (empId) => fletes.filter(f => !f.is_deleted && f.fecha?.startsWith(mesActual) && f.empleadoId === empId)
+    const totalFletesDe = (empId) => fletesDelMes(empId).reduce((s, f) => s + (f.montoCliente || 0), 0)
 
     const handlePDF = (emp) => {
         generarLiquidacionPDF({
             empleado: emp,
-            fletesEmp: fletesDelMes,
+            fletesEmp: fletesDelMes(emp.id),
             abonosEmp: abonosDe(emp.id),
             mes: mesActual,
             maestros,
@@ -551,14 +550,16 @@ function PanelLiquidaciones() {
                                 <Avatar nombre={emp.nombre} size="md" />
                                 <div className="text-left">
                                     <p className="font-bold text-zinc-200 text-sm">{emp.nombre}</p>
-                                    <p className="text-xs text-zinc-600">{lista.length} abono{lista.length !== 1 ? 's' : ''} este mes</p>
+                                    <p className="text-xs text-zinc-600">{lista.length} abono{lista.length !== 1 ? 's' : ''} · {fletesDelMes(emp.id).length} ingreso{fletesDelMes(emp.id).length !== 1 ? 's' : ''}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 {isAdmin && (
                                     <div className="text-right">
-                                        <p className="text-xs text-zinc-600">Total</p>
-                                        <p className="font-black text-amber-400 text-sm">{fmt(total)}</p>
+                                        <p className="text-xs text-zinc-600">Líquido</p>
+                                        <p className={`font-black text-sm ${(totalFletesDe(emp.id) - totalAbonos(emp.id)) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                            ${(totalFletesDe(emp.id) - totalAbonos(emp.id)).toLocaleString('es-CL')}
+                                        </p>
                                     </div>
                                 )}
                                 {isOpen ? <ChevronUp className="w-4 h-4 text-zinc-600" /> : <ChevronDown className="w-4 h-4 text-zinc-600" />}
